@@ -1,5 +1,3 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-
 import { createPostgresClient, getDatabaseUrl } from "@/db/connection";
 import { seedInitialClearWaterData } from "./run";
 
@@ -14,10 +12,9 @@ async function seed() {
   }
 
   const client = createPostgresClient(databaseUrl);
-  const db = drizzle(client);
 
   try {
-    await seedInitialClearWaterData(db);
+    await seedInitialClearWaterData(client);
     console.info("ClearWater seed complete.");
   } finally {
     await client.end();

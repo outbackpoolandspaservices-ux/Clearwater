@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await seedInitialClearWaterData(db);
+      await seedInitialClearWaterData(client);
       seedStatus = "applied";
     } catch (error) {
       seedStatus = "failed";
