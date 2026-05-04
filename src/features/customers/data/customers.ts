@@ -4,6 +4,12 @@ import { customers, getCustomerById as getMockCustomerById } from "@/lib/mock-da
 const mockCustomers = customers;
 
 export type CustomerRecord = (typeof mockCustomers)[number];
+export type CustomerDataSource = "database" | "mock";
+export type CustomersLoadResult = {
+  count: number;
+  customers: CustomerRecord[];
+  source: CustomerDataSource;
+};
 
 type DatabaseCustomerRow = {
   id: string;
@@ -51,7 +57,7 @@ function safeReadError(error: unknown) {
   };
 }
 
-function logCustomerSource(source: "database" | "mock", count: number) {
+function logCustomerSource(source: CustomerDataSource, count: number) {
   console.info("ClearWater customers data source", {
     count,
     source,
@@ -252,10 +258,20 @@ async function getCustomerFromDatabaseById(
 }
 
 export async function getCustomers() {
+  const result = await getCustomersWithSource();
+
+  return result.customers;
+}
+
+export async function getCustomersWithSource(): Promise<CustomersLoadResult> {
   if (!hasDatabaseUrl()) {
     logCustomerSource("mock", mockCustomers.length);
 
-    return mockCustomers;
+    return {
+      count: mockCustomers.length,
+      customers: mockCustomers,
+      source: "mock",
+    };
   }
 
   try {
@@ -263,7 +279,11 @@ export async function getCustomers() {
 
     logCustomerSource("database", databaseCustomers.length);
 
-    return databaseCustomers;
+    return {
+      count: databaseCustomers.length,
+      customers: databaseCustomers,
+      source: "database",
+    };
   } catch (error) {
     console.error(
       "Falling back to mock customers after database read failed",
@@ -271,7 +291,11 @@ export async function getCustomers() {
     );
     logCustomerSource("mock", mockCustomers.length);
 
-    return mockCustomers;
+    return {
+      count: mockCustomers.length,
+      customers: mockCustomers,
+      source: "mock",
+    };
   }
 }
 

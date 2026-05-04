@@ -3,14 +3,15 @@ import Link from "next/link";
 import { SectionPage } from "@/components/app-shell/section-page";
 import { SearchFilterBar } from "@/components/ui/search-filter-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getCustomers } from "@/features/customers/data/customers";
+import { getCustomersWithSource } from "@/features/customers/data/customers";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
+export const runtime = "nodejs";
 
 export default async function CustomersPage() {
-  const customers = await getCustomers();
+  const { count, customers, source } = await getCustomersWithSource();
 
   return (
     <SectionPage
@@ -23,6 +24,16 @@ export default async function CustomersPage() {
         filterOptions={["Residential", "Commercial", "Real estate"]}
         searchPlaceholder="Search customers by name, phone, or email"
       />
+
+      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+        <span className="font-semibold text-slate-950">Data source:</span>{" "}
+        {source}
+        <span className="mx-2 text-slate-300">|</span>
+        <span className="font-semibold text-slate-950">
+          Customer records loaded:
+        </span>{" "}
+        {count}
+      </div>
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">
