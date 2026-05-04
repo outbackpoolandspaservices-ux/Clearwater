@@ -12,7 +12,7 @@ Customers, Sites, and Pools now have a data access layer:
 
 The app pages for customers, properties/sites, and pools call these functions instead of importing those records directly from `src/lib/mock-data.ts`.
 
-The first real database-backed feature is now Add Customer:
+The first database-backed feature is Add Customer:
 
 - Route: `/customers/new`
 - Scope: customer contact details, customer type, billing address, communication preference, internal notes, and active/inactive status.
@@ -21,13 +21,22 @@ The first real database-backed feature is now Add Customer:
 - Safety: the form fails safely if no database URL is configured and does not expose database errors to users.
 - Boundary: this creates a billing/customer profile only. Service sites/properties, pools, jobs, portal access, and accounting records remain separate workflows.
 
+The next database-backed feature is Add Property/Site:
+
+- Route: `/properties/new`
+- Scope: customer link, site/property name, manual address entry, access instructions, gate code, pet warning, tenant details, owner/agent details, internal notes, status, and coordinate placeholders.
+- Save path: server action in `src/features/properties/actions.ts`
+- Database target: the current migrated `properties` table, or `sites` if a future migration adds it.
+- Safety: inserts only columns that exist in the current database table and stores future-only fields in notes where needed.
+- Boundary: this creates the service location only. Pools, jobs, routing, invoices, reports, and integrations remain separate workflows.
+
 ## Current Behaviour
 
-The UI still uses mock fallback data for reads.
+The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer creation is the first write workflow that can save to PostgreSQL while the customer list continues to show mock data. This lets ClearWater test safe writes before switching list/detail pages to database reads.
+Customer and property/site creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers and Properties/Sites now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -52,11 +61,10 @@ The data functions are async and are structured so future work can replace the d
 6. Seed the first real records with `npm run db:seed`.
 7. Verify safe table counts with `npm run db:verify`.
 8. Check `/api/health/database`.
-9. Implement Drizzle queries in the database branches of the data access files.
+9. Review database-created customers and properties with the protected count endpoints or a safe database admin tool.
 10. Compare database results against mock data fields used by the UI.
-11. Review database-created customers with `npm run db:verify` or a safe database admin tool.
-12. Switch `CLEARWATER_DATA_SOURCE` to `database` in a safe development environment only after read queries are implemented.
-13. Only after review, migrate the next workflow.
+11. Keep `CLEARWATER_DATA_SOURCE="mock"` until broader workflow reads are intentionally migrated.
+12. Only after review, migrate the next workflow.
 
 Drizzle is configured in `drizzle.config.ts` with:
 

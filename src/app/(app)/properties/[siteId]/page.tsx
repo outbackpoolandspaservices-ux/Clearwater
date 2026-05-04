@@ -10,6 +10,11 @@ import { getPoolsForSite } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
 import { getJobsForSite } from "@/lib/mock-data";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 type SiteDetailPageProps = {
   params: Promise<{
     siteId: string;
@@ -29,6 +34,12 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
     getPoolsForSite(site.id),
   ]);
   const recentJobs = getJobsForSite(site.id);
+  const mapsQuery = [site.address, site.suburb].filter(Boolean).join(", ");
+  const mapsHref = mapsQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        mapsQuery,
+      )}`
+    : null;
 
   return (
     <SectionPage
@@ -42,6 +53,16 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
         <p className="text-sm text-slate-600">
           {site.address}, {site.suburb}
         </p>
+        {mapsHref ? (
+          <a
+            className="inline-flex min-h-9 items-center rounded-md border border-cyan-200 px-3 text-sm font-semibold text-cyan-700 hover:border-cyan-300 hover:bg-cyan-50"
+            href={mapsHref}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Open in Maps
+          </a>
+        ) : null}
       </div>
 
       <section className="grid gap-4 xl:grid-cols-2">

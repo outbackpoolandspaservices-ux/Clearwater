@@ -4,10 +4,19 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { SearchFilterBar } from "@/components/ui/search-filter-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCustomers } from "@/features/customers/data/customers";
-import { getSites } from "@/features/properties/data/sites";
+import { getSitesWithSource } from "@/features/properties/data/sites";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
 
 export default async function PropertiesPage() {
-  const [customers, sites] = await Promise.all([getCustomers(), getSites()]);
+  const [customers, sitesResult] = await Promise.all([
+    getCustomers(),
+    getSitesWithSource(),
+  ]);
+  const { count, sites, source } = sitesResult;
 
   return (
     <SectionPage
@@ -15,10 +24,22 @@ export default async function PropertiesPage() {
       description="Service addresses, access notes, gate codes, geocoding, route metadata, and property-level service preferences."
     >
       <SearchFilterBar
+        actionHref="/properties/new"
+        actionLabel="Add Property"
         filterLabel="All suburbs"
         filterOptions={["Alice Springs", "Gillen", "Larapinta", "East Side"]}
         searchPlaceholder="Search sites by address, suburb, customer, or access note"
       />
+
+      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+        <span className="font-semibold text-slate-950">Data source:</span>{" "}
+        {source}
+        <span className="mx-2 text-slate-300">|</span>
+        <span className="font-semibold text-slate-950">
+          Property records loaded:
+        </span>{" "}
+        {count}
+      </div>
 
       <section className="grid gap-4 xl:grid-cols-2">
         {sites.map((site) => {

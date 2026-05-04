@@ -102,8 +102,9 @@ The first working app shell includes:
 - Mock-data Stock, Chemicals, and Van Inventory foundation, including BioGuard Australia product examples, chemical detail pages, van stock levels, low-stock examples, job usage history, and mock profitability placeholders on linked jobs and invoices.
 - Mock-data Routing and Route Optimisation foundation, including daily technician route plans, stop order, travel/service estimates, route comparison placeholders, technician mobile route view, dispatch route links, and a future GraphHopper/provider planning boundary.
 - Authentication and database foundation, including a practical Drizzle/PostgreSQL schema, Auth.js adapter tables, organisation/RBAC planning, route access helpers, environment placeholders, and migration documentation.
-- First safe data access migration seam for Customers, Properties/Sites, and Pools. These pages now read through feature data access functions with mock fallback, while real Drizzle queries are planned for the next step.
-- First database-backed write workflow: Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured. The Customers list still uses mock fallback until `CLEARWATER_DATA_SOURCE` is intentionally switched and read queries are reviewed.
+- First safe database-backed workflows for Customers and Properties/Sites. These pages now read through feature data access functions with mock fallback while `CLEARWATER_DATA_SOURCE` remains `mock`.
+- Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured.
+- Add Property/Site saves service location records to PostgreSQL when a database URL is configured. Address search is prepared for future Google Places autocomplete, with manual entry available now.
 
 The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
 
@@ -181,6 +182,17 @@ Database-backed Add Customer:
 - If no database URL is configured, the form fails safely with a friendly message.
 - After saving, ClearWater redirects back to `/customers`; the visible list remains mock-backed until database reads are enabled in a later migration step.
 - Use `npm run db:verify` to confirm the safe customer table count without exposing database credentials.
+
+Database-backed Add Property/Site:
+
+- Open `/properties/new` from the Properties page.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- The form links a property/site to an existing customer. It loads database customers when available and falls back to mock customers if needed.
+- Manual address entry works now. Google Places autocomplete is planned for a later phase.
+- The current migrated table stores core fields such as customer, name, street address, suburb, gate code, access notes, coordinates, pet warnings, and technician notes.
+- Future address fields such as state, postcode, country, tenant details, and status are safely stored in notes where first-class columns are not available yet.
+- `/properties` and `/properties/[siteId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
+- `/api/admin/database/properties/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 
 Database health checks:
 

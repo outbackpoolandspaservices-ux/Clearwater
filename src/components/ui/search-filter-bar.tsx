@@ -1,8 +1,11 @@
+import Link from "next/link";
+
 type SearchFilterBarProps = {
   searchPlaceholder: string;
   filterLabel: string;
   filterOptions: string[];
   actionLabel?: string;
+  actionHref?: string;
 };
 
 export function SearchFilterBar({
@@ -10,6 +13,7 @@ export function SearchFilterBar({
   filterLabel,
   filterOptions,
   actionLabel,
+  actionHref,
 }: SearchFilterBarProps) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 md:flex-row md:items-center md:justify-between">
@@ -36,7 +40,14 @@ export function SearchFilterBar({
           ))}
         </select>
       </div>
-      {actionLabel ? (
+      {actionLabel && actionHref ? (
+        <Link
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
+          href={actionHref}
+        >
+          {actionLabel}
+        </Link>
+      ) : actionLabel ? (
         <button
           className="min-h-10 rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
           type="button"
