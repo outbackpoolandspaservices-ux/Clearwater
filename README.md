@@ -103,6 +103,7 @@ The first working app shell includes:
 - Mock-data Routing and Route Optimisation foundation, including daily technician route plans, stop order, travel/service estimates, route comparison placeholders, technician mobile route view, dispatch route links, and a future GraphHopper/provider planning boundary.
 - Authentication and database foundation, including a practical Drizzle/PostgreSQL schema, Auth.js adapter tables, organisation/RBAC planning, route access helpers, environment placeholders, and migration documentation.
 - First safe data access migration seam for Customers, Properties/Sites, and Pools. These pages now read through feature data access functions with mock fallback, while real Drizzle queries are planned for the next step.
+- First database-backed write workflow: Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured. The Customers list still uses mock fallback until `CLEARWATER_DATA_SOURCE` is intentionally switched and read queries are reviewed.
 
 The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
 
@@ -165,10 +166,21 @@ Database setup steps:
 4. Run `npm run db:generate`.
 5. Run `npm run db:migrate`.
 6. Run `npm run db:seed`.
-7. Check `/api/health/database`.
-8. Switch `CLEARWATER_DATA_SOURCE` to `database` only after the data access functions have real Drizzle queries and the seeded records have been reviewed.
+7. Run `npm run db:verify` to print safe table counts.
+8. Check `/api/health/database`.
+9. Switch `CLEARWATER_DATA_SOURCE` to `database` only after the data access functions have real Drizzle queries and the seeded records have been reviewed.
 
 The seed currently prepares organisation, users/roles, customers, sites, pools, and equipment records. It does not migrate jobs, water testing, reports, invoices, routing, or portal data.
+
+Database-backed Add Customer:
+
+- Open `/customers/new` from the Customers page.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this first write workflow.
+- The form saves customer contact, billing address, communication preference, internal notes, type, and status to PostgreSQL.
+- Billing/customer address is stored separately from future service site/property addresses. Sites and pools are not created by this form.
+- If no database URL is configured, the form fails safely with a friendly message.
+- After saving, ClearWater redirects back to `/customers`; the visible list remains mock-backed until database reads are enabled in a later migration step.
+- Use `npm run db:verify` to confirm the safe customer table count without exposing database credentials.
 
 Database health checks:
 
@@ -177,6 +189,23 @@ Database health checks:
 - The app also accepts Vercel-style `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, or `POSTGRES_URL_NON_POOLING` if `DATABASE_URL` is not set.
 - The health check never prints the database URL or password.
 - Drizzle migrations are generated into the existing `drizzle/` folder.
+- The first current-schema migration is `drizzle/0000_curvy_marvel_apes.sql`.
+
+One-time database setup route:
+
+- Set `CLEARWATER_SETUP_KEY` to a long random secret in Vercel or `.env.local`.
+- Keep `CLEARWATER_DATA_SOURCE="mock"`.
+- Send a `POST` request to `/api/admin/database/setup`.
+- Provide the key in the `x-clearwater-setup-key` header, or as `CLEARWATER_SETUP_KEY` / `setupKey` query parameter.
+- The route runs prepared Drizzle migrations and the initial seed only when authorised.
+- It returns migration status, seed status, table counts, and data source mode without revealing credentials.
+
+Example:
+
+```bash
+curl -X POST "https://your-clearwater-domain.example/api/admin/database/setup" \
+  -H "x-clearwater-setup-key: your-long-random-setup-key"
+```
 
 ## Documentation
 
