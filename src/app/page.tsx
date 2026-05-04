@@ -1,26 +1,5 @@
-import {
-  CtaBand,
-  HeroSection,
-  SeniorDiscountSection,
-  ServicesPreview,
-  SiteShell,
-  WhyChooseUsSection,
-  WhyCleanSection,
-  WinterEfficiencySection,
-} from "@/features/outback-aircon/website-shell";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <SiteShell>
-      <main>
-        <HeroSection />
-        <ServicesPreview />
-        <WhyCleanSection />
-        <WinterEfficiencySection />
-        <WhyChooseUsSection />
-        <SeniorDiscountSection />
-        <CtaBand />
-      </main>
-    </SiteShell>
-  );
+export default function HomePage() {
+  redirect("/dashboard");
 }
