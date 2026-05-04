@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SectionPage } from "@/components/app-shell/section-page";
+import { getCustomers } from "@/features/customers/data/customers";
 import { PoolForm } from "@/features/pools/pool-form";
 import { getSites } from "@/features/properties/data/sites";
 
@@ -10,7 +11,7 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function NewPoolPage() {
-  const sites = await getSites();
+  const [customers, sites] = await Promise.all([getCustomers(), getSites()]);
 
   return (
     <SectionPage
@@ -26,7 +27,7 @@ export default async function NewPoolPage() {
         </Link>
       </div>
 
-      <PoolForm sites={sites} />
+      <PoolForm customers={customers} sites={sites} />
     </SectionPage>
   );
 }

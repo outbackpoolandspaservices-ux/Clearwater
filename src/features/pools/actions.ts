@@ -92,6 +92,38 @@ function safeErrorSummary(error: unknown) {
   };
 }
 
+function futureWaterTestingGuideContext({
+  chlorinatorType,
+  environment,
+  poolType,
+  sanitiserType,
+  surfaceType,
+  waterSource,
+}: {
+  chlorinatorType: string;
+  environment: string;
+  poolType: string;
+  sanitiserType: string;
+  surfaceType: string;
+  waterSource: string;
+}) {
+  // TODO: Water testing should use this kind of pool context to calculate and
+  // display guide ranges from pool type, indoor/outdoor exposure, sanitiser
+  // system, chlorinator model/settings, surface, water source, and salt/mineral
+  // or magnesium system details. Equipment integration will provide richer
+  // chlorinator model/settings later.
+  return [
+    poolType ? `Guide context pool type: ${poolType}` : "",
+    environment ? `Guide context environment: ${environment}` : "",
+    sanitiserType ? `Guide context sanitiser system: ${sanitiserType}` : "",
+    chlorinatorType ? `Guide context chlorinator: ${chlorinatorType}` : "",
+    surfaceType ? `Guide context surface: ${surfaceType}` : "",
+    waterSource ? `Guide context water source: ${waterSource}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export async function createPoolAction(
   _previousState: CreatePoolFormState,
   formData: FormData,
@@ -126,14 +158,6 @@ export async function createPoolAction(
   const automationSystem = getString(formData, "automationSystem");
   const cleanerType = getString(formData, "cleanerType");
   const environment = getString(formData, "environment");
-  const saltTarget = getString(formData, "saltTarget");
-  const freeChlorineTarget = getString(formData, "freeChlorineTarget");
-  const phTarget = getString(formData, "phTarget");
-  const alkalinityTarget = getString(formData, "alkalinityTarget");
-  const calciumHardnessTarget = getString(formData, "calciumHardnessTarget");
-  const cyanuricAcidTarget = getString(formData, "cyanuricAcidTarget");
-  const phosphateTarget = getString(formData, "phosphateTarget");
-  const temperatureTarget = getString(formData, "temperatureTarget");
   const normalChemicalBehaviour = getString(formData, "normalChemicalBehaviour");
   const recurringIssues = getString(formData, "recurringIssues");
   const accessSafetyNotes = getString(formData, "accessSafetyNotes");
@@ -225,20 +249,14 @@ export async function createPoolAction(
       };
     }
 
-    const targetRanges = {
-      salt: saltTarget || null,
-      freeChlorine: freeChlorineTarget || null,
-      ph: phTarget || null,
-      alkalinity: alkalinityTarget || null,
-      calciumHardness: calciumHardnessTarget || null,
-      cyanuricAcid: cyanuricAcidTarget || null,
-      phosphate: phosphateTarget || null,
-      temperature: temperatureTarget || null,
-    };
-    const targetRangesText = Object.entries(targetRanges)
-      .filter(([, value]) => value)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(", ");
+    const guideContext = futureWaterTestingGuideContext({
+      chlorinatorType,
+      environment,
+      poolType,
+      sanitiserType,
+      surfaceType,
+      waterSource,
+    });
     const futureFieldNotes = [
       poolShape ? `Pool shape: ${poolShape}` : "",
       poolUseType ? `Pool use type: ${poolUseType}` : "",
@@ -264,7 +282,7 @@ export async function createPoolAction(
       automationSystem ? `Automation/controller system: ${automationSystem}` : "",
       cleanerType ? `Cleaner type: ${cleanerType}` : "",
       status ? `Status: ${status}` : "",
-      targetRangesText ? `Target ranges: ${targetRangesText}` : "",
+      guideContext,
       normalChemicalBehaviour
         ? `Normal chemical behaviour: ${normalChemicalBehaviour}`
         : "",
@@ -294,7 +312,6 @@ export async function createPoolAction(
       sanitiser_type: sanitiserType || null,
       environment: environment || null,
       is_salt_water: saltWater,
-      target_ranges: JSON.stringify(targetRanges),
       normal_chemical_behaviour: futureFieldNotes || null,
       notes: futureFieldNotes || null,
       service_notes: futureFieldNotes || null,

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 
 import { createPoolAction, type CreatePoolFormState } from "@/features/pools/actions";
+import type { CustomerRecord } from "@/features/customers/data/customers";
 import type { SiteRecord } from "@/features/properties/data/sites";
 
 const initialState: CreatePoolFormState = {};
@@ -67,11 +68,73 @@ function TextAreaField({ label, name }: { label: string; name: string }) {
   );
 }
 
-export function PoolForm({ sites }: { sites: SiteRecord[] }) {
+type SiteSearchOption = {
+  customerName: string;
+  customerContact: string;
+  searchText: string;
+  site: SiteRecord;
+};
+
+function buildSiteSearchOptions(
+  customers: CustomerRecord[],
+  sites: SiteRecord[],
+): SiteSearchOption[] {
+  return sites.map((site) => {
+    const customer = customers.find((item) => item.id === site.customerId);
+    const customerName = customer?.name ?? site.ownerOrAgent ?? "Unknown customer";
+    const customerContact = [customer?.phone, customer?.email]
+      .filter(Boolean)
+      .join(" | ");
+    const searchText = [
+      site.name,
+      site.address,
+      site.suburb,
+      site.accessWarning,
+      site.accessNotes,
+      site.tenantDetails,
+      site.ownerAgentDetails,
+      customerName,
+      customer?.phone,
+      customer?.email,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return {
+      customerContact,
+      customerName,
+      searchText,
+      site,
+    };
+  });
+}
+
+export function PoolForm({
+  customers,
+  sites,
+}: {
+  customers: CustomerRecord[];
+  sites: SiteRecord[];
+}) {
+  const [siteSearch, setSiteSearch] = useState("");
   const [state, formAction, isPending] = useActionState(
     createPoolAction,
     initialState,
   );
+  const siteOptions = useMemo(
+    () => buildSiteSearchOptions(customers, sites),
+    [customers, sites],
+  );
+  const filteredSiteOptions = useMemo(() => {
+    const query = siteSearch.trim().toLowerCase();
+
+    if (!query) {
+      return siteOptions;
+    }
+
+    return siteOptions.filter((option) => option.searchText.includes(query));
+  }, [siteOptions, siteSearch]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -90,12 +153,28 @@ export function PoolForm({ sites }: { sites: SiteRecord[] }) {
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
+            <Field
+              helpText="Search by site name, customer, address, suburb, notes, phone, or email. The selected property/site ID is saved with the pool."
+              label="Search properties/sites"
+            >
+              <input
+                className={inputClassName}
+                onChange={(event) => setSiteSearch(event.target.value)}
+                placeholder="Search Flynn, Mia, Gillen, 0400..."
+                type="search"
+                value={siteSearch}
+              />
+            </Field>
+          </div>
+
+          <div className="md:col-span-2">
             <Field label="Property/site">
               <select className={inputClassName} defaultValue="" name="siteId">
                 <option value="">Choose a property/site</option>
-                {sites.map((site) => (
+                {filteredSiteOptions.map(({ customerContact, customerName, site }) => (
                   <option key={site.id} value={site.id}>
-                    {site.name} - {site.address}, {site.suburb}
+                    {site.name} - {site.address}, {site.suburb} - {customerName}
+                    {customerContact ? ` (${customerContact})` : ""}
                   </option>
                 ))}
               </select>
@@ -124,13 +203,39 @@ export function PoolForm({ sites }: { sites: SiteRecord[] }) {
             <FieldError message={state.fieldErrors?.volumeLitres} />
           </Field>
 
-          <Field label="Pool type">
-            <input className={inputClassName} name="poolType" placeholder="In-ground" />
-          </Field>
+          <SelectField label="Pool type" name="poolType">
+            <option value="">Choose pool type</option>
+            <option value="Residential pool">Residential pool</option>
+            <option value="Commercial pool">Commercial pool</option>
+            <option value="Body corporate / shared pool">
+              Body corporate / shared pool
+            </option>
+            <option value="Rental property pool">Rental property pool</option>
+            <option value="Holiday accommodation pool">
+              Holiday accommodation pool
+            </option>
+            <option value="Spa">Spa</option>
+            <option value="Plunge pool">Plunge pool</option>
+            <option value="Lap pool">Lap pool</option>
+            <option value="Therapy / hydrotherapy pool">
+              Therapy / hydrotherapy pool
+            </option>
+            <option value="Other">Other</option>
+          </SelectField>
 
-          <Field label="Pool shape">
-            <input className={inputClassName} name="poolShape" placeholder="Rectangle" />
-          </Field>
+          <SelectField label="Pool shape" name="poolShape">
+            <option value="">Choose pool shape</option>
+            <option value="Rectangular">Rectangular</option>
+            <option value="Kidney">Kidney</option>
+            <option value="Freeform">Freeform</option>
+            <option value="L-shaped">L-shaped</option>
+            <option value="Round">Round</option>
+            <option value="Oval">Oval</option>
+            <option value="Figure-eight">Figure-eight</option>
+            <option value="Lap pool">Lap pool</option>
+            <option value="Spa / circular">Spa / circular</option>
+            <option value="Custom / unknown">Custom / unknown</option>
+          </SelectField>
 
           <SelectField label="Pool use type" name="poolUseType">
             <option value="">Choose use type</option>
@@ -280,6 +385,10 @@ export function PoolForm({ sites }: { sites: SiteRecord[] }) {
           <Field label="Chlorinator type">
             <input className={inputClassName} name="chlorinatorType" />
           </Field>
+          <p className="text-sm leading-6 text-slate-500 md:col-span-2">
+            Salt level requirements will be calculated from the selected
+            chlorinator/equipment profile where available.
+          </p>
 
           <SelectField label="Filtration type" name="filtrationType">
             <option value="">Choose filtration</option>
@@ -326,43 +435,12 @@ export function PoolForm({ sites }: { sites: SiteRecord[] }) {
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-semibold text-slate-950">
-          Target chemistry
-        </h2>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <Field label="Salt level target">
-            <input className={inputClassName} name="saltTarget" placeholder="4000 ppm" />
-          </Field>
-
-          <Field label="Free chlorine target">
-            <input className={inputClassName} name="freeChlorineTarget" placeholder="2-4 ppm" />
-          </Field>
-
-          <Field label="pH target">
-            <input className={inputClassName} name="phTarget" placeholder="7.4-7.6" />
-          </Field>
-
-          <Field label="Alkalinity target">
-            <input className={inputClassName} name="alkalinityTarget" placeholder="80-120 ppm" />
-          </Field>
-
-          <Field label="Calcium hardness target">
-            <input className={inputClassName} name="calciumHardnessTarget" placeholder="200-400 ppm" />
-          </Field>
-
-          <Field label="Cyanuric acid target">
-            <input className={inputClassName} name="cyanuricAcidTarget" placeholder="30-50 ppm" />
-          </Field>
-
-          <Field label="Phosphate target">
-            <input className={inputClassName} name="phosphateTarget" placeholder="Below 500 ppb" />
-          </Field>
-
-          <Field label="Temperature target if relevant">
-            <input className={inputClassName} name="temperatureTarget" placeholder="28 C" />
-          </Field>
-        </div>
+        <h2 className="text-lg font-semibold text-slate-950">Water chemistry</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Water chemistry targets will be shown during water testing based on pool
+          type, sanitiser system, chlorinator/equipment settings, and water
+          conditions.
+        </p>
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5">

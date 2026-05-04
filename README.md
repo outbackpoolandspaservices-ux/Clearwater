@@ -105,7 +105,7 @@ The first working app shell includes:
 - First safe database-backed workflows for Customers, Properties/Sites, and Pools. These pages now read through feature data access functions with mock fallback while `CLEARWATER_DATA_SOURCE` remains `mock`.
 - Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured.
 - Add Property/Site saves service location records to PostgreSQL when a database URL is configured. Address search is prepared for future Google Places autocomplete, with manual entry available now.
-- Add Pool saves pool profile records to PostgreSQL when a database URL is configured. Detailed pool environment, water source, construction, system, chemistry target, and service-note fields are safely stored in pool notes/metadata until dedicated columns are migrated later.
+- Add Pool saves pool profile records to PostgreSQL when a database URL is configured. Detailed pool environment, water source, construction, system, and service-note fields are safely stored in pool notes/metadata until dedicated columns are migrated later.
 
 The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
 
@@ -199,9 +199,11 @@ Database-backed Add Pool:
 
 - Open `/pools/new` from the Pools page.
 - Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
-- The form links a pool to an existing property/site. It loads database properties/sites when available and falls back to mock sites if needed.
+- The form links a pool to an existing property/site. It loads database properties/sites when available and falls back to mock sites if needed. The selector can be searched by property/site name, customer, street address, suburb, notes, phone, or email.
 - The current migrated `pools` table stores core fields such as property/site link, pool name, type, surface, volume, sanitiser, environment, targets, and notes where those columns exist.
-- Future pool profile fields such as shape, use type, water source, exposure, construction condition, equipment system details, chemistry targets, recurring issues, and preferences are safely stored in notes/metadata where first-class columns are not available yet.
+- Future pool profile fields such as shape, use type, water source, exposure, construction condition, equipment system details, recurring issues, and preferences are safely stored in notes/metadata where first-class columns are not available yet.
+- Water chemistry targets are no longer captured on the pool profile. Future water testing will calculate and display guide ranges from pool type, indoor/outdoor context, sanitiser system, chlorinator/equipment settings, surface type, water source, and water conditions.
+- Salt level requirements will come from the selected chlorinator/equipment profile where available in a later equipment integration step.
 - `/pools` and `/pools/[poolId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
 - `/api/admin/database/pools/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 

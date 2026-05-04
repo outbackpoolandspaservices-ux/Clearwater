@@ -33,10 +33,12 @@ The next database-backed feature is Add Property/Site:
 The next database-backed feature is Add Pool:
 
 - Route: `/pools/new`
-- Scope: property/site link, pool identity, environment, water source, construction, sanitiser/system details, target chemistry, and service notes.
+- Scope: property/site link, pool identity, searchable property/site selection, environment, water source, construction, sanitiser/system details, and service notes.
 - Save path: server action in `src/features/pools/actions.ts`
 - Database target: the current migrated `pools` table.
 - Safety: inserts only columns that exist in the current database table and stores future-only pool profile fields in notes/metadata where needed.
+- Chemistry boundary: Add Pool does not ask for target chemistry values. Future water testing should calculate/display guide ranges from pool type, indoor/outdoor context, sanitiser system, chlorinator/equipment settings, surface type, water source, and applicable salt/mineral/magnesium system details.
+- Equipment boundary: salt level requirements should come from the selected chlorinator/equipment profile where available. The equipment integration for detailed chlorinator model/settings is planned later.
 - Boundary: this creates the pool profile only. Jobs, equipment migration, water testing migration, routing, invoices, reports, Xero, payments, and AI remain separate workflows.
 
 ## Current Behaviour
