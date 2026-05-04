@@ -68,6 +68,16 @@ function TextAreaField({ label, name }: { label: string; name: string }) {
   );
 }
 
+function siteOptionLabel({
+  customerContact,
+  customerName,
+  site,
+}: Pick<SiteSearchOption, "customerContact" | "customerName" | "site">) {
+  return `${site.name} - ${site.address}, ${site.suburb} - ${customerName}${
+    customerContact ? ` (${customerContact})` : ""
+  }`;
+}
+
 type SiteSearchOption = {
   customerName: string;
   customerContact: string;
@@ -117,6 +127,7 @@ export function PoolForm({
   customers: CustomerRecord[];
   sites: SiteRecord[];
 }) {
+  const [selectedSiteId, setSelectedSiteId] = useState("");
   const [siteSearch, setSiteSearch] = useState("");
   const [state, formAction, isPending] = useActionState(
     createPoolAction,
@@ -135,6 +146,14 @@ export function PoolForm({
 
     return siteOptions.filter((option) => option.searchText.includes(query));
   }, [siteOptions, siteSearch]);
+  const selectedSiteOption = siteOptions.find(
+    (option) => option.site.id === selectedSiteId,
+  );
+
+  function selectSite(option: SiteSearchOption) {
+    setSelectedSiteId(option.site.id);
+    setSiteSearch(siteOptionLabel(option));
+  }
 
   return (
     <form action={formAction} className="space-y-6">
@@ -164,17 +183,63 @@ export function PoolForm({
                 type="search"
                 value={siteSearch}
               />
+              <div className="mt-3 rounded-md border border-slate-200 bg-slate-50">
+                {filteredSiteOptions.length > 0 ? (
+                  <div className="max-h-64 overflow-y-auto p-2">
+                    {filteredSiteOptions.slice(0, 8).map((option) => (
+                      <button
+                        className={`block w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-white hover:shadow-sm ${
+                          selectedSiteId === option.site.id
+                            ? "bg-white text-cyan-800 shadow-sm"
+                            : "text-slate-700"
+                        }`}
+                        key={option.site.id}
+                        onClick={() => selectSite(option)}
+                        type="button"
+                      >
+                        <span className="block font-semibold text-slate-950">
+                          {option.site.name}
+                        </span>
+                        <span className="mt-1 block text-slate-600">
+                          {option.site.address}, {option.site.suburb}
+                        </span>
+                        <span className="mt-1 block text-slate-500">
+                          {option.customerName}
+                          {option.customerContact
+                            ? ` - ${option.customerContact}`
+                            : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-3 py-3 text-sm text-slate-500">
+                    No matching properties/sites found
+                  </p>
+                )}
+              </div>
             </Field>
           </div>
 
           <div className="md:col-span-2">
-            <Field label="Property/site">
-              <select className={inputClassName} defaultValue="" name="siteId">
+            <Field
+              helpText={
+                selectedSiteOption
+                  ? `Selected: ${siteOptionLabel(selectedSiteOption)}`
+                  : "Choose a result above or select a property/site from the list."
+              }
+              label="Property/site"
+            >
+              <select
+                className={inputClassName}
+                name="siteId"
+                onChange={(event) => setSelectedSiteId(event.target.value)}
+                value={selectedSiteId}
+              >
                 <option value="">Choose a property/site</option>
-                {filteredSiteOptions.map(({ customerContact, customerName, site }) => (
-                  <option key={site.id} value={site.id}>
-                    {site.name} - {site.address}, {site.suburb} - {customerName}
-                    {customerContact ? ` (${customerContact})` : ""}
+                {siteOptions.map((option) => (
+                  <option key={option.site.id} value={option.site.id}>
+                    {siteOptionLabel(option)}
                   </option>
                 ))}
               </select>
@@ -362,13 +427,39 @@ export function PoolForm({
             <option value="unknown">Unknown</option>
           </SelectField>
 
-          <Field label="Coping condition">
-            <input className={inputClassName} name="copingCondition" />
-          </Field>
+          <SelectField label="Coping condition" name="copingCondition">
+            <option value="">Choose coping condition</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+            <option value="Poor">Poor</option>
+            <option value="Loose coping">Loose coping</option>
+            <option value="Cracked coping">Cracked coping</option>
+            <option value="Missing sections">Missing sections</option>
+            <option value="Sharp edges/safety concern">
+              Sharp edges/safety concern
+            </option>
+            <option value="Stained/discoloured">Stained/discoloured</option>
+            <option value="Not inspected">Not inspected</option>
+            <option value="Not applicable">Not applicable</option>
+            <option value="Other / notes">Other / notes</option>
+          </SelectField>
 
-          <Field label="Skimmer condition">
-            <input className={inputClassName} name="skimmerCondition" />
-          </Field>
+          <SelectField label="Skimmer condition" name="skimmerCondition">
+            <option value="">Choose skimmer condition</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+            <option value="Poor">Poor</option>
+            <option value="Cracked/damaged">Cracked/damaged</option>
+            <option value="Basket missing">Basket missing</option>
+            <option value="Lid damaged/missing">Lid damaged/missing</option>
+            <option value="Weir door missing/damaged">
+              Weir door missing/damaged
+            </option>
+            <option value="Blocked/restricted">Blocked/restricted</option>
+            <option value="Not inspected">Not inspected</option>
+            <option value="Not applicable">Not applicable</option>
+            <option value="Other / notes">Other / notes</option>
+          </SelectField>
 
           <SelectField label="Sanitation type" name="sanitiserType">
             <option value="">Choose sanitation</option>
@@ -403,9 +494,20 @@ export function PoolForm({
             <input className={inputClassName} name="pumpType" />
           </Field>
 
-          <Field label="Heater type">
-            <input className={inputClassName} name="heaterType" />
-          </Field>
+          <SelectField label="Heater type" name="heaterType">
+            <option value="">Choose heater type</option>
+            <option value="None">None</option>
+            <option value="Electric heat pump">Electric heat pump</option>
+            <option value="Gas heater">Gas heater</option>
+            <option value="Solar heating">Solar heating</option>
+            <option value="Electric resistance heater">
+              Electric resistance heater
+            </option>
+            <option value="Integrated spa heater">Integrated spa heater</option>
+            <option value="Unknown">Unknown</option>
+            <option value="Not inspected">Not inspected</option>
+            <option value="Other / notes">Other / notes</option>
+          </SelectField>
 
           <SelectField label="Spa attached" name="spaAttached">
             <option value="">Choose spa status</option>
