@@ -29,7 +29,11 @@ async function verifyCounts() {
     const counts = await getSetupTableCounts(client);
 
     for (const [table, count] of Object.entries(counts)) {
-      console.info(`${table}: ${count}`);
+      if (count === "missing") {
+        console.info(`${table}: missing`);
+      } else {
+        console.info(`${table}: ${count}`);
+      }
     }
   } finally {
     await client.end();
