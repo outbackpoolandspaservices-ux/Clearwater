@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 type SetupStatus = "applied" | "skipped" | "failed";
+type SetupStage = "migration" | "seed" | "table-counts";
 
 function getRequestSetupKey(request: NextRequest) {
   return (
@@ -29,6 +30,63 @@ function isAuthorised(request: NextRequest) {
   const requestKey = getRequestSetupKey(request);
 
   return Boolean(expectedKey && requestKey && requestKey === expectedKey);
+}
+
+function getSafeError(error: unknown) {
+  const errorName = error instanceof Error ? error.name : "UnknownError";
+  const rawMessage =
+    error instanceof Error ? error.message : "Unknown database setup error.";
+  const databaseUrl = getDatabaseUrl();
+  const errorMessage = databaseUrl
+    ? rawMessage.replaceAll(databaseUrl, "[database-url-redacted]")
+    : rawMessage;
+
+  return {
+    errorName,
+    errorMessage,
+  };
+}
+
+function setupErrorResponse({
+  dataSourceMode,
+  databaseUrlSource,
+  error,
+  migrationStatus,
+  seedStatus,
+  stage,
+  tableCounts,
+}: {
+  dataSourceMode: string;
+  databaseUrlSource: string | null;
+  error: unknown;
+  migrationStatus: SetupStatus;
+  seedStatus: SetupStatus;
+  stage: SetupStage;
+  tableCounts: SetupTableCounts | null;
+}) {
+  console.error(`ClearWater database setup failed during ${stage}`, error);
+
+  const { errorName, errorMessage } = getSafeError(error);
+
+  return NextResponse.json(
+    {
+      ok: false,
+      stage,
+      errorName,
+      errorMessage,
+      dataSourceMode,
+      databaseUrlConfigured: true,
+      configuredEnvVar: databaseUrlSource,
+      migration: {
+        status: migrationStatus,
+      },
+      seed: {
+        status: seedStatus,
+      },
+      tableCounts,
+    },
+    { status: 500 },
+  );
 }
 
 export function GET(request: NextRequest) {
@@ -87,13 +145,53 @@ export async function POST(request: NextRequest) {
   const db = drizzle(client);
 
   try {
-    await migrate(db, { migrationsFolder: "drizzle" });
-    migrationStatus = "applied";
+    try {
+      await migrate(db, { migrationsFolder: "drizzle" });
+      migrationStatus = "applied";
+    } catch (error) {
+      migrationStatus = "failed";
 
-    await seedInitialClearWaterData(db);
-    seedStatus = "applied";
+      return setupErrorResponse({
+        dataSourceMode,
+        databaseUrlSource,
+        error,
+        migrationStatus,
+        seedStatus,
+        stage: "migration",
+        tableCounts,
+      });
+    }
 
-    tableCounts = await getSetupTableCounts(client);
+    try {
+      await seedInitialClearWaterData(db);
+      seedStatus = "applied";
+    } catch (error) {
+      seedStatus = "failed";
+
+      return setupErrorResponse({
+        dataSourceMode,
+        databaseUrlSource,
+        error,
+        migrationStatus,
+        seedStatus,
+        stage: "seed",
+        tableCounts,
+      });
+    }
+
+    try {
+      tableCounts = await getSetupTableCounts(client);
+    } catch (error) {
+      return setupErrorResponse({
+        dataSourceMode,
+        databaseUrlSource,
+        error,
+        migrationStatus,
+        seedStatus,
+        stage: "table-counts",
+        tableCounts,
+      });
+    }
 
     return NextResponse.json({
       ok: true,
@@ -111,26 +209,15 @@ export async function POST(request: NextRequest) {
       tableCounts,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown database setup error.";
-
-    return NextResponse.json(
-      {
-        ok: false,
-        dataSourceMode,
-        databaseUrlConfigured: true,
-        configuredEnvVar: databaseUrlSource,
-        migration: {
-          status: migrationStatus === "applied" ? migrationStatus : "failed",
-        },
-        seed: {
-          status: seedStatus === "applied" ? seedStatus : "failed",
-        },
-        tableCounts,
-        message,
-      },
-      { status: 500 },
-    );
+    return setupErrorResponse({
+      dataSourceMode,
+      databaseUrlSource,
+      error,
+      migrationStatus,
+      seedStatus,
+      stage: "migration",
+      tableCounts,
+    });
   } finally {
     await client.end();
   }
