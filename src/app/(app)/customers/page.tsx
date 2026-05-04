@@ -19,6 +19,7 @@ export default async function CustomersPage() {
       description="Customer profiles, contact details, billing preferences, notes, communication history, and portal access."
     >
       <SearchFilterBar
+        actionHref="/customers/new"
         actionLabel="Add Customer"
         filterLabel="All customer types"
         filterOptions={["Residential", "Commercial", "Real estate"]}
