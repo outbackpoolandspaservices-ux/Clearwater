@@ -1,4 +1,4 @@
-import { createPostgresClient, hasDatabaseUrl } from "@/db/connection";
+import { createPostgresClient } from "@/db/connection";
 import { customers, getCustomerById as getMockCustomerById } from "@/lib/mock-data";
 
 const mockCustomers = customers;
@@ -98,24 +98,32 @@ async function getSiteIdsForCustomer(
   client: ReturnType<typeof createPostgresClient>,
   customerId: string,
 ) {
-  const tableName = (await tableExists(client, "sites")) ? "sites" : "properties";
+  try {
+    const tableName = (await tableExists(client, "sites"))
+      ? "sites"
+      : "properties";
 
-  if (!(await tableExists(client, tableName))) {
+    if (!(await tableExists(client, tableName))) {
+      return [];
+    }
+
+    const columns = await getTableColumns(client, tableName);
+
+    if (!columns.has("id") || !columns.has("customer_id")) {
+      return [];
+    }
+
+    const rows = await client.unsafe(
+      `select "id" from ${quoteIdentifier(tableName)} where "customer_id" = $1`,
+      [customerId],
+    );
+
+    return rows.map((row) => String(row.id));
+  } catch (error) {
+    console.error("Customer site count lookup failed", safeReadError(error));
+
     return [];
   }
-
-  const columns = await getTableColumns(client, tableName);
-
-  if (!columns.has("id") || !columns.has("customer_id")) {
-    return [];
-  }
-
-  const rows = await client.unsafe(
-    `select "id" from ${quoteIdentifier(tableName)} where "customer_id" = $1`,
-    [customerId],
-  );
-
-  return rows.map((row) => String(row.id));
 }
 
 function mapDatabaseCustomer(
@@ -264,16 +272,6 @@ export async function getCustomers() {
 }
 
 export async function getCustomersWithSource(): Promise<CustomersLoadResult> {
-  if (!hasDatabaseUrl()) {
-    logCustomerSource("mock", mockCustomers.length);
-
-    return {
-      count: mockCustomers.length,
-      customers: mockCustomers,
-      source: "mock",
-    };
-  }
-
   try {
     const databaseCustomers = await getCustomersFromDatabase();
 
@@ -286,7 +284,7 @@ export async function getCustomersWithSource(): Promise<CustomersLoadResult> {
     };
   } catch (error) {
     console.error(
-      "Falling back to mock customers after database read failed",
+      "Falling back to mock customers after database read failed or no database URL was available",
       safeReadError(error),
     );
     logCustomerSource("mock", mockCustomers.length);
@@ -300,15 +298,6 @@ export async function getCustomersWithSource(): Promise<CustomersLoadResult> {
 }
 
 export async function getCustomerById(customerId: string) {
-  if (!hasDatabaseUrl()) {
-    console.info("ClearWater customer detail data source", {
-      customerId,
-      source: "mock",
-    });
-
-    return getMockCustomerById(customerId);
-  }
-
   try {
     const databaseCustomer = await getCustomerFromDatabaseById(customerId);
 
