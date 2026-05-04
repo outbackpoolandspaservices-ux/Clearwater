@@ -1,11 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { drizzle } from "drizzle-orm/postgres-js";
 
 import { createPostgresClient, hasDatabaseUrl } from "@/db/connection";
-import { customers, organisations } from "@/db/schema";
-import { organisationSeed } from "@/db/seed/organisation";
 
 export type CreateCustomerFormState = {
   fieldErrors?: Partial<Record<string, string>>;
@@ -52,6 +49,32 @@ function joinBillingAddress(parts: {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function quoteIdentifier(identifier: string) {
+  return `"${identifier.replaceAll('"', '""')}"`;
+}
+
+async function getTableColumns(
+  client: ReturnType<typeof createPostgresClient>,
+  tableName: string,
+) {
+  const rows = await client<{ column_name: string }[]>`
+    select column_name
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = ${tableName}
+  `;
+
+  return new Set(rows.map((row) => row.column_name));
+}
+
+function safeErrorSummary(error: unknown) {
+  return {
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    errorMessage:
+      error instanceof Error ? error.message : "Unknown customer save error.",
+  };
 }
 
 export async function createCustomerAction(
@@ -106,36 +129,82 @@ export async function createCustomerAction(
     };
   }
 
+  const billingAddress = joinBillingAddress({
+    line1: billingLine1,
+    line2: billingLine2,
+    suburb: billingSuburb,
+    state: billingState,
+    postcode: billingPostcode,
+    country: billingCountry,
+  });
+
+  const legacyNotes = [
+    internalNotes ? `Internal notes: ${internalNotes}` : "",
+    status ? `Customer status: ${status}` : "",
+    communicationPreference
+      ? `Communication preference: ${communicationPreference}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const client = createPostgresClient();
-  const db = drizzle(client);
 
   try {
-    await db.insert(organisations).values(organisationSeed).onConflictDoNothing();
+    const customerColumns = await getTableColumns(client, "customers");
 
-    await db.insert(customers).values({
-      organisationId: organisationSeed.id,
-      displayName: name,
+    if (customerColumns.size === 0) {
+      console.error("Customer creation failed: customers table is missing.");
+
+      return {
+        formError:
+          "The customers table is not available yet. Please run the protected database setup route, then try again.",
+      };
+    }
+
+    const candidateValues: Record<string, boolean | string | null> = {
+      display_name: name,
       email: email || null,
       phone: phone || null,
-      customerType: customerType as (typeof customerTypeValues)[number],
-      billingAddress: joinBillingAddress({
-        line1: billingLine1,
-        line2: billingLine2,
-        suburb: billingSuburb,
-        state: billingState,
-        postcode: billingPostcode,
-        country: billingCountry,
-      }),
-      communicationPreferences: communicationPreference || null,
-      internalNotes: internalNotes || null,
-      isActive: status === "active",
-    });
+      billing_address: billingAddress || null,
+      customer_type: customerType,
+      communication_preferences: communicationPreference || null,
+      internal_notes: internalNotes || null,
+      notes: legacyNotes || null,
+      is_active: status === "active",
+      portal_enabled: false,
+    };
+
+    // TODO: once the current migrations catch up to src/db/schema.ts, store
+    // status in is_active and internal notes in internal_notes. Until then the
+    // migrated table safely keeps these details in notes where available.
+    const columns = Object.keys(candidateValues).filter((column) =>
+      customerColumns.has(column),
+    );
+    const values = columns.map((column) => candidateValues[column]);
+    const placeholders = columns.map((_, index) => `$${index + 1}`).join(", ");
+
+    await client.unsafe(
+      `insert into "customers" (${columns.map(quoteIdentifier).join(", ")})
+       values (${placeholders})`,
+      values,
+    );
   } catch (error) {
-    console.error("Customer creation failed", error);
+    console.error("Customer creation failed", {
+      ...safeErrorSummary(error),
+      formFields: {
+        hasEmail: Boolean(email),
+        hasPhone: Boolean(phone),
+        hasBillingAddress: Boolean(billingAddress),
+        customerType,
+        status,
+      },
+      error,
+    });
 
     return {
       formError:
-        "ClearWater could not save this customer yet. Please check the database setup and try again.",
+        "ClearWater could not save this customer. The database is connected, but the customer table shape needs attention. Please check the Vercel server logs for the safe insert error summary.",
     };
   } finally {
     await client.end();
