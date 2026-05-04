@@ -5,14 +5,14 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobById } from "@/features/jobs/data/jobs";
+import { getPoolById } from "@/features/pools/data/pools";
+import { getSiteById } from "@/features/properties/data/sites";
 import {
-  getCustomerById,
   getEquipmentForPool,
   getBioGuardProductById,
   getJobProfitabilityByJobId,
-  getJobById,
-  getPoolById,
-  getSiteById,
   getStockUsageForJob,
   getTechnicianById,
   getWaterTestsByIds,
@@ -82,17 +82,24 @@ type JobDetailPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
   const { jobId } = await params;
-  const job = getJobById(jobId);
+  const job = await getJobById(jobId);
 
   if (!job) {
     notFound();
   }
 
-  const customer = getCustomerById(job.customerId);
-  const site = getSiteById(job.siteId);
-  const pool = getPoolById(job.poolId);
+  const [customer, pool, site] = await Promise.all([
+    getCustomerById(job.customerId),
+    job.poolId ? getPoolById(job.poolId) : Promise.resolve(undefined),
+    getSiteById(job.siteId),
+  ]);
   const technician = getTechnicianById(job.technicianId);
   const linkedEquipment = pool ? getEquipmentForPool(pool.id) : [];
   const linkedWaterTests = getWaterTestsByIds(job.waterTestIds);
@@ -108,7 +115,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   return (
     <SectionPage
       title={`${job.jobNumber}: ${job.title}`}
-      description="Mock job workspace for dispatch, technician workflow, site context, water testing, equipment, photos, and billing follow-up."
+      description="Job workspace for dispatch, technician workflow, site context, water testing, equipment, photos, and billing follow-up."
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={statusTone(job.status)}>{job.status}</StatusBadge>
@@ -118,6 +125,18 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         <p className="text-sm text-slate-600">
           {job.scheduledDate} at {job.scheduledTime}
         </p>
+        {site?.address ? (
+          <Link
+            className="inline-flex min-h-9 items-center rounded-md border border-cyan-200 px-3 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              `${site.address}, ${site.suburb}`,
+            )}`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Open in Maps
+          </Link>
+        ) : null}
       </div>
 
       <DetailCard title="Workflow status">

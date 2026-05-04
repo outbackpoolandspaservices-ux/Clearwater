@@ -39,6 +39,15 @@ The next database-backed feature is Add Pool:
 - Safety: inserts only columns that exist in the current database table and stores future-only pool profile fields in notes/metadata where needed.
 - Chemistry boundary: Add Pool does not ask for target chemistry values. Future water testing should calculate/display guide ranges from pool type, indoor/outdoor context, sanitiser system, chlorinator/equipment settings, surface type, water source, and applicable salt/mineral/magnesium system details.
 - Equipment boundary: salt level requirements should come from the selected chlorinator/equipment profile where available. The equipment integration for detailed chlorinator model/settings is planned later.
+
+The next database-backed workflow is Jobs and Service Visits foundation:
+
+- Routes: `/jobs`, `/jobs/[jobId]`, and `/jobs/new`
+- Scope: job list/detail reads, Add Job form, customer/property/pool linking, scheduling fields, technician assignment placeholder, practical service checklist, repair fields, recurrence notes, and maps link on job detail.
+- Save path: server action in `src/features/jobs/actions.ts`
+- Database target: the current migrated `jobs` table.
+- Safety: inserts only columns that exist in the current database table and stores future-only job workflow, checklist, recurrence, and repair fields in notes/metadata where needed.
+- Boundary: this creates job/work-order records only. Water testing will come next and will link to jobs and pools. Invoices, reports, Xero, payments, routing, and AI remain separate workflows.
 - Boundary: this creates the pool profile only. Jobs, equipment migration, water testing migration, routing, invoices, reports, Xero, payments, and AI remain separate workflows.
 
 ## Current Behaviour
@@ -47,7 +56,7 @@ The UI still uses mock fallback data when a database URL is missing or a scoped 
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, and pool creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, and Pools now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, and job creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, and Jobs now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -61,6 +70,8 @@ The data functions are async and are structured so future work can replace the d
 - `getPools()`
 - `getPoolById()`
 - `getPoolsForSite()`
+- `getJobs()`
+- `getJobById()`
 
 ## Future Steps
 
@@ -72,7 +83,7 @@ The data functions are async and are structured so future work can replace the d
 6. Seed the first real records with `npm run db:seed`.
 7. Verify safe table counts with `npm run db:verify`.
 8. Check `/api/health/database`.
-9. Review database-created customers, properties, and pools with the protected count endpoints or a safe database admin tool.
+9. Review database-created customers, properties, pools, and jobs with the protected count endpoints or a safe database admin tool.
 10. Compare database results against mock data fields used by the UI.
 11. Keep `CLEARWATER_DATA_SOURCE="mock"` until broader workflow reads are intentionally migrated.
 12. Only after review, migrate the next workflow.
@@ -158,7 +169,7 @@ The database health endpoint reports whether a connection succeeds, but it never
 
 These still use mock data directly and should stay that way for now:
 
-- Jobs
+- Dispatch
 - Visits
 - Water testing
 - Chemical dosing

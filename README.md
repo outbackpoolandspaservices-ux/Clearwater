@@ -106,6 +106,7 @@ The first working app shell includes:
 - Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured.
 - Add Property/Site saves service location records to PostgreSQL when a database URL is configured. Address search is prepared for future Google Places autocomplete, with manual entry available now.
 - Add Pool saves pool profile records to PostgreSQL when a database URL is configured. Detailed pool environment, water source, construction, system, and service-note fields are safely stored in pool notes/metadata until dedicated columns are migrated later.
+- Add Job saves service visit/work-order records to PostgreSQL when a database URL is configured. Jobs link to customers, properties/sites, and pools, with practical scheduling, checklist, recurrence placeholder, and repair metadata stored safely in notes where dedicated columns are not available yet.
 
 The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
 
@@ -206,6 +207,17 @@ Database-backed Add Pool:
 - Salt level requirements will come from the selected chlorinator/equipment profile where available in a later equipment integration step.
 - `/pools` and `/pools/[poolId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
 - `/api/admin/database/pools/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+
+Database-backed Jobs workflow:
+
+- Open `/jobs/new` from the Jobs page.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- `/jobs` and `/jobs/[jobId]` attempt PostgreSQL reads when a database URL is configured and fall back to mock jobs if the database is unavailable.
+- The Add Job form searches and links customer, property/site, and pool records. Selecting a customer filters properties/sites; selecting a property/site filters pools.
+- The current migrated `jobs` table stores core fields such as customer, property/site, title, status, schedule, assigned user where valid, and notes where those columns exist.
+- Recurring jobs are captured as notes/placeholders only. A full recurring job engine is planned later.
+- Water testing is planned as the next workflow and will link to jobs and pools. Dosing logic, Xero, payments, AI, reports, and invoices remain out of scope for this step.
+- `/api/admin/database/jobs/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 
 Database health checks:
 

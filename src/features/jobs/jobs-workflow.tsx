@@ -5,17 +5,28 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  customers,
-  getCustomerById,
-  getPoolById,
-  getSiteById,
-  getTechnicianById,
-  jobs,
-  recurringJobs,
-} from "@/lib/mock-data";
+import type { CustomerRecord } from "@/features/customers/data/customers";
+import type { JobRecord } from "@/features/jobs/data/jobs";
+import type { PoolRecord } from "@/features/pools/data/pools";
+import type { SiteRecord } from "@/features/properties/data/sites";
 
 const allValue = "all";
+type TechnicianRecord = {
+  id: string;
+  name: string;
+  role: string;
+};
+type RecurringJobRecord = {
+  customerId: string;
+  frequency: string;
+  id: string;
+  nextServiceDate: string;
+  poolId: string;
+  siteId: string;
+  status: string;
+  technicianId: string;
+  window: string;
+};
 
 function unique(values: string[]) {
   return Array.from(new Set(values));
@@ -45,7 +56,21 @@ function statusTone(status: string) {
   return "neutral" as const;
 }
 
-export function JobsWorkflow() {
+export function JobsWorkflow({
+  customers,
+  jobs,
+  pools,
+  recurringJobs,
+  sites,
+  technicians,
+}: {
+  customers: CustomerRecord[];
+  jobs: JobRecord[];
+  pools: PoolRecord[];
+  recurringJobs: RecurringJobRecord[];
+  sites: SiteRecord[];
+  technicians: TechnicianRecord[];
+}) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(allValue);
   const [technician, setTechnician] = useState(allValue);
@@ -56,9 +81,11 @@ export function JobsWorkflow() {
     const searchText = search.trim().toLowerCase();
 
     return jobs.filter((job) => {
-      const site = getSiteById(job.siteId);
-      const pool = getPoolById(job.poolId);
-      const assignedTechnician = getTechnicianById(job.technicianId);
+      const site = sites.find((item) => item.id === job.siteId);
+      const pool = pools.find((item) => item.id === job.poolId);
+      const assignedTechnician = technicians.find(
+        (item) => item.id === job.technicianId,
+      );
       const haystack = [
         job.jobNumber,
         job.jobType,
@@ -83,7 +110,7 @@ export function JobsWorkflow() {
         (priority === allValue || job.priority === priority)
       );
     });
-  }, [jobType, priority, search, status, technician]);
+  }, [jobType, jobs, pools, priority, search, sites, status, technician, technicians]);
 
   const statuses = unique(jobs.map((job) => job.status));
   const jobTypes = unique(jobs.map((job) => job.jobType));
@@ -119,8 +146,8 @@ export function JobsWorkflow() {
               value={technician}
             >
               <option value={allValue}>All technicians</option>
-              {unique(jobs.map((job) => job.technicianId)).map((id) => {
-                const assignedTechnician = getTechnicianById(id);
+              {unique(jobs.map((job) => job.technicianId).filter(Boolean)).map((id) => {
+                const assignedTechnician = technicians.find((item) => item.id === id);
 
                 return (
                   <option key={id} value={id}>
@@ -154,12 +181,12 @@ export function JobsWorkflow() {
               ))}
             </select>
           </div>
-          <button
-            className="min-h-10 rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
-            type="button"
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
+            href="/jobs/new"
           >
             Create Job
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -190,10 +217,14 @@ export function JobsWorkflow() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredJobs.map((job) => {
-                  const customer = getCustomerById(job.customerId);
-                  const site = getSiteById(job.siteId);
-                  const pool = getPoolById(job.poolId);
-                  const assignedTechnician = getTechnicianById(job.technicianId);
+                  const customer = customers.find(
+                    (item) => item.id === job.customerId,
+                  );
+                  const site = sites.find((item) => item.id === job.siteId);
+                  const pool = pools.find((item) => item.id === job.poolId);
+                  const assignedTechnician = technicians.find(
+                    (item) => item.id === job.technicianId,
+                  );
 
                   return (
                     <tr key={job.id} className="hover:bg-slate-50">
@@ -269,10 +300,10 @@ export function JobsWorkflow() {
             const customer = customers.find(
               (item) => item.id === recurringJob.customerId,
             );
-            const site = getSiteById(recurringJob.siteId);
-            const pool = getPoolById(recurringJob.poolId);
-            const assignedTechnician = getTechnicianById(
-              recurringJob.technicianId,
+            const site = sites.find((item) => item.id === recurringJob.siteId);
+            const pool = pools.find((item) => item.id === recurringJob.poolId);
+            const assignedTechnician = technicians.find(
+              (item) => item.id === recurringJob.technicianId,
             );
 
             return (
