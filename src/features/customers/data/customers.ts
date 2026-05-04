@@ -7,8 +7,10 @@ export type CustomerRecord = (typeof mockCustomers)[number];
 
 type DatabaseCustomerRow = {
   id: string;
+  created_at?: Date | string | null;
   display_name?: string | null;
   email?: string | null;
+  name?: string | null;
   phone?: string | null;
   billing_address?: string | null;
   notes?: string | null;
@@ -118,7 +120,7 @@ function mapDatabaseCustomer(
 
   return {
     id: customer.id,
-    name: customer.display_name ?? "Unnamed customer",
+    name: customer.display_name ?? customer.name ?? "Unnamed customer",
     phone: customer.phone ?? "Not provided",
     email: customer.email ?? "Not provided",
     type: formatCustomerType(customer.customer_type),
@@ -144,14 +146,20 @@ async function getCustomersFromDatabase(): Promise<CustomerRecord[]> {
 
   try {
     const columns = await getTableColumns(client, "customers");
+    const nameColumn = columns.has("display_name")
+      ? "display_name"
+      : columns.has("name")
+        ? "name"
+        : null;
 
-    if (!columns.has("id") || !columns.has("display_name")) {
+    if (!columns.has("id") || !nameColumn) {
       throw new Error("The customers table is missing required columns.");
     }
 
     const readableColumns = [
       "id",
       "display_name",
+      "name",
       "email",
       "phone",
       "billing_address",
@@ -163,12 +171,14 @@ async function getCustomersFromDatabase(): Promise<CustomerRecord[]> {
       "owner_details",
       "portal_enabled",
       "is_active",
+      "created_at",
     ].filter((column) => columns.has(column));
+    const orderColumn = columns.has("created_at") ? "created_at" : nameColumn;
 
     const rows = await client.unsafe<DatabaseCustomerRow[]>(
       `select ${readableColumns.map(quoteIdentifier).join(", ")}
        from "customers"
-       order by "display_name" asc`,
+       order by ${quoteIdentifier(orderColumn)} ${orderColumn === "created_at" ? "desc" : "asc"}`,
     );
 
     return Promise.all(
@@ -191,14 +201,20 @@ async function getCustomerFromDatabaseById(
 
   try {
     const columns = await getTableColumns(client, "customers");
+    const nameColumn = columns.has("display_name")
+      ? "display_name"
+      : columns.has("name")
+        ? "name"
+        : null;
 
-    if (!columns.has("id") || !columns.has("display_name")) {
+    if (!columns.has("id") || !nameColumn) {
       throw new Error("The customers table is missing required columns.");
     }
 
     const readableColumns = [
       "id",
       "display_name",
+      "name",
       "email",
       "phone",
       "billing_address",
@@ -210,6 +226,7 @@ async function getCustomerFromDatabaseById(
       "owner_details",
       "portal_enabled",
       "is_active",
+      "created_at",
     ].filter((column) => columns.has(column));
 
     const rows = await client.unsafe<DatabaseCustomerRow[]>(

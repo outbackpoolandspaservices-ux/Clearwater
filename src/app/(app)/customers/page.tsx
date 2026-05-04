@@ -46,23 +46,33 @@ export default async function CustomersPage() {
                       className="font-semibold text-slate-950 hover:text-cyan-700"
                       href={`/customers/${customer.id}`}
                     >
-                      {customer.name}
+                      {customer.name || "Unnamed customer"}
                     </Link>
                   </td>
-                  <td className="px-5 py-4 text-slate-600">{customer.phone}</td>
-                  <td className="px-5 py-4 text-slate-600">{customer.email}</td>
-                  <td className="px-5 py-4 text-slate-600">{customer.type}</td>
                   <td className="px-5 py-4 text-slate-600">
-                    {customer.siteIds.length}
+                    {customer.phone || "Not provided"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {customer.email || "Not provided"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {customer.type || "Residential"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {customer.siteIds?.length ?? 0}
                   </td>
                   <td className="px-5 py-4 font-medium text-slate-950">
-                    {customer.outstandingBalance}
+                    {customer.outstandingBalance || "$0"}
                   </td>
                   <td className="px-5 py-4">
                     <StatusBadge
-                      tone={customer.status === "Active" ? "success" : "warning"}
+                      tone={
+                        (customer.status || "Active") === "Active"
+                          ? "success"
+                          : "warning"
+                      }
                     >
-                      {customer.status}
+                      {customer.status || "Active"}
                     </StatusBadge>
                   </td>
                 </tr>
