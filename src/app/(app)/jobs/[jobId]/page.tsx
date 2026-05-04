@@ -193,6 +193,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             >
               Add Water Test
             </Link>
+            <Link
+              className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+              href={`/reports/new/service?jobId=${encodeURIComponent(job.id)}`}
+            >
+              Create Service Report
+            </Link>
             <button
               className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
               type="button"

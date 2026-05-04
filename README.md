@@ -109,8 +109,9 @@ The first working app shell includes:
 - Add Job saves service visit/work-order records to PostgreSQL when a database URL is configured. Jobs link to customers, properties/sites, and pools, with practical scheduling, checklist, recurrence placeholder, and repair metadata stored safely in notes where dedicated columns are not available yet.
 - Add Water Test saves technician water chemistry readings to PostgreSQL when a database URL is configured. Tests link to pools and optional jobs, with guide ranges displayed during testing rather than stored as pool profile targets.
 - Job Execution and Technician Today foundation reads jobs from PostgreSQL when available, links technicians from the run sheet to `/jobs/[jobId]/execute`, stores checklist/status/chemical-use notes safely on the current `jobs` table, and keeps stock deduction, photos/files, BioGuard dosing automation, and customer reports for later phases.
+- Service Report foundation reads reports from PostgreSQL when available, supports `/reports/new/service?jobId=...`, stores draft service reports in the current `reports` table, and renders customer-facing report previews from linked job, customer, property/site, pool, and water-test data. PDF generation, automatic email sending, photos/files, and AI-generated wording are later phases.
 
-ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, and Technician execution slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
+ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
 ## Getting Started
 
@@ -223,6 +224,16 @@ Database-backed Jobs workflow:
 - `/technician/today` and `/jobs/[jobId]/execute` now provide a database-backed job execution foundation. Execution updates can change job status and save checklist, chemical-use notes, technician notes, customer notes, internal notes, and follow-up flags to existing job note columns.
 - Chemicals used are notes only for now. Stock deduction, BioGuard dosing automation, photos/files, service reports, and customer notifications will come later.
 - `/api/admin/database/jobs/status-summary` provides a protected safe count by job status using `CLEARWATER_SETUP_KEY`.
+
+Database-backed Service Report workflow:
+
+- Open `/reports/new/service?jobId=...` from a job detail page or job execution page.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- `/reports` and `/reports/[reportId]` attempt PostgreSQL reads when a database URL is configured and fall back to mock reports if the database is unavailable.
+- The current migrated `reports` table stores linked customer, site, pool, job, water test, report number, type, status, summary, findings, and recommendations.
+- Rich report details such as checklist summary, chemical-use notes, technician notes, and customer-facing notes are derived from linked job notes for now.
+- PDF download, Send to Customer, Email Report, View Customer Portal, photo/file rendering, and AI-generated wording are placeholders only.
+- `/api/admin/database/reports/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 
 Database-backed Water Testing workflow:
 

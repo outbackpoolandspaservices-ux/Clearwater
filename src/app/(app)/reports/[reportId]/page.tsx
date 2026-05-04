@@ -5,16 +5,16 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobById } from "@/features/jobs/data/jobs";
+import { getPoolById } from "@/features/pools/data/pools";
+import { getSiteById } from "@/features/properties/data/sites";
+import { getReportById } from "@/features/reports/data/reports";
+import { getWaterTestById } from "@/features/water-testing/data/water-tests";
 import {
   getBioGuardProductById,
   getChemicalRecommendationsForTest,
-  getCustomerById,
-  getJobById,
-  getPoolById,
-  getReportById,
-  getSiteById,
   getTechnicianById,
-  getWaterTestById,
   inspectionSections,
   equipment,
 } from "@/lib/mock-data";
@@ -24,6 +24,11 @@ type ReportDetailPageProps = {
     reportId: string;
   }>;
 };
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
 
 function ReportSection({
   title,
@@ -40,22 +45,63 @@ function ReportSection({
   );
 }
 
+function readingStatus(label: string, value?: string) {
+  const parsed = Number(String(value ?? "").replace(/[^\d.-]/g, ""));
+
+  if (!Number.isFinite(parsed)) {
+    return "Not tested";
+  }
+
+  if (label === "Free chlorine") {
+    if (parsed < 2) return "Low";
+    if (parsed > 4) return "High";
+  }
+
+  if (label === "pH") {
+    if (parsed < 7.2) return "Low";
+    if (parsed > 7.6) return "High";
+  }
+
+  if (label === "Total alkalinity") {
+    if (parsed < 80) return "Low";
+    if (parsed > 120) return "High";
+  }
+
+  if (label === "Calcium hardness") {
+    if (parsed > 400) return "High";
+  }
+
+  if (label === "Cyanuric acid") {
+    if (parsed > 50) return "High";
+  }
+
+  if (label === "Phosphate") {
+    if (parsed > 500) return "High";
+  }
+
+  return "OK";
+}
+
 export default async function ReportDetailPage({
   params,
 }: ReportDetailPageProps) {
   const { reportId } = await params;
-  const report = getReportById(reportId);
+  const report = await getReportById(reportId);
 
   if (!report) {
     notFound();
   }
 
-  const customer = getCustomerById(report.customerId);
-  const site = getSiteById(report.siteId);
-  const pool = getPoolById(report.poolId);
-  const job = getJobById(report.jobId);
-  const technician = getTechnicianById(report.technicianId);
-  const waterTest = getWaterTestById(report.waterTestId);
+  const [customer, site, pool, job, waterTest] = await Promise.all([
+    getCustomerById(report.customerId),
+    getSiteById(report.siteId),
+    report.poolId ? getPoolById(report.poolId) : Promise.resolve(undefined),
+    getJobById(report.jobId),
+    report.waterTestId
+      ? getWaterTestById(report.waterTestId)
+      : Promise.resolve(undefined),
+  ]);
+  const technician = getTechnicianById(report.technicianId || job?.technicianId || "");
   const recommendations = waterTest
     ? getChemicalRecommendationsForTest(waterTest.id)
     : [];
@@ -83,6 +129,18 @@ export default async function ReportDetailPage({
               type="button"
             >
               Send to Customer Placeholder
+            </button>
+            <button
+              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              type="button"
+            >
+              Email Report Placeholder
+            </button>
+            <button
+              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              type="button"
+            >
+              View Customer Portal Placeholder
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -218,6 +276,9 @@ export default async function ReportDetailPage({
                     <p className="mt-1 text-sm font-semibold text-slate-950">
                       {value}
                     </p>
+                    <p className="mt-1 text-xs font-semibold text-cyan-700">
+                      {readingStatus(label, value)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -284,6 +345,14 @@ export default async function ReportDetailPage({
             </p>
           </ReportSection>
 
+          <ReportSection title="Checklist summary">
+            <p className="text-sm leading-6 text-slate-700">
+              {job?.internalNotes?.includes("Checklist completed")
+                ? job.internalNotes
+                : "Checklist details will appear here when this report is created from a completed job execution update."}
+            </p>
+          </ReportSection>
+
           <ReportSection title="Equipment observations">
             <p className="text-sm leading-6 text-slate-700">
               {report.equipmentObservations}
@@ -315,6 +384,27 @@ export default async function ReportDetailPage({
             <p className="text-sm leading-6 text-slate-700">
               {report.recommendations}
             </p>
+          </ReportSection>
+
+          <ReportSection title="Technician and customer notes">
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-md border border-slate-200 p-4">
+                <p className="text-sm font-semibold text-slate-950">
+                  Technician notes
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {job?.internalNotes ?? "No technician notes recorded."}
+                </p>
+              </div>
+              <div className="rounded-md border border-slate-200 p-4">
+                <p className="text-sm font-semibold text-slate-950">
+                  Customer-facing notes
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  {job?.customerNotes ?? report.customerSummary}
+                </p>
+              </div>
+            </div>
           </ReportSection>
 
           <ReportSection title="Summary of findings">

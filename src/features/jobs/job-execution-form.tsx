@@ -466,6 +466,12 @@ export function JobExecutionForm({
         >
           Cancel
         </Link>
+        <Link
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-cyan-200 px-4 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+          href={`/reports/new/service?jobId=${encodeURIComponent(job.id)}`}
+        >
+          Create Service Report
+        </Link>
         <button
           className="inline-flex min-h-11 items-center justify-center rounded-md bg-cyan-600 px-5 text-sm font-semibold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-cyan-300"
           disabled={isPending}

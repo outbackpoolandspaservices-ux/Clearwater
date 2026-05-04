@@ -69,13 +69,22 @@ The next database-backed workflow is Job Execution and Technician Today foundati
 - Safety: updates only columns that exist in the current `jobs` table. Checklist, chemical-use details, and future-only workflow fields are stored in existing note columns until first-class execution, stock movement, attachment, and report tables are connected.
 - Boundary: this is a field execution foundation only. Stock deduction, BioGuard dosing automation, photo/file uploads, customer reports, Xero, payments, and AI remain separate workflows.
 
+The next database-backed workflow is Service Report foundation:
+
+- Routes: `/reports`, `/reports/[reportId]`, and `/reports/new/service?jobId=...`
+- Scope: report list/detail reads, service report creation from a linked job, customer-facing preview layout, linked customer/property/pool/job/water-test context, simple water chemistry Low/OK/High interpretation, checklist summary from job notes, chemical-use notes from job execution, recommendations, follow-up, and placeholder PDF/sending actions.
+- Save path: server action in `src/features/reports/actions.ts`
+- Database target: the current migrated `reports` table.
+- Safety: inserts only columns that exist in the current `reports` table. Richer service report fields are stored in summary, findings, and recommendations until dedicated report sections, attachments, and delivery tables are connected.
+- Boundary: this is a preview and draft workflow only. Real PDF generation, automatic email/SMS sending, photo/file rendering, customer portal delivery, and AI-generated wording remain separate phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, water test creation, and job execution updates can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, and Technician Today now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, job execution updates, and service report creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, and Reports now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -93,6 +102,8 @@ The data functions are async and are structured so future work can replace the d
 - `getJobById()`
 - `getWaterTests()`
 - `getWaterTestById()`
+- `getReports()`
+- `getReportById()`
 
 ## Future Steps
 
