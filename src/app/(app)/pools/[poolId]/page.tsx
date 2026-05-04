@@ -18,6 +18,11 @@ type PoolDetailPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
   const { poolId } = await params;
   const pool = await getPoolById(poolId);
@@ -32,7 +37,7 @@ export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
 
   return (
     <SectionPage
-      title={pool.name}
+      title={pool.name || "Unnamed pool"}
       description="Pool profile with chemistry targets, equipment, recent water tests, and service notes."
     >
       <div className="flex flex-wrap items-center gap-3">
@@ -57,16 +62,24 @@ export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
                 label: "Volume",
                 value: `${pool.volumeLitres.toLocaleString("en-AU")} L`,
               },
-              { label: "Pool type", value: pool.poolType },
-              { label: "Surface type", value: pool.surfaceType },
-              { label: "Sanitiser system", value: pool.sanitiserType },
-              { label: "Last test date", value: pool.lastTestDate },
+              { label: "Pool type", value: pool.poolType || "Not recorded" },
+              {
+                label: "Surface type",
+                value: pool.surfaceType || "Not recorded",
+              },
+              {
+                label: "Sanitiser system",
+                value: pool.sanitiserType || "Not recorded",
+              },
+              { label: "Last test date", value: pool.lastTestDate || "No tests yet" },
             ]}
           />
         </DetailCard>
 
         <DetailCard title="Target chemistry ranges">
-          <p className="text-sm leading-6 text-slate-700">{pool.targetRanges}</p>
+          <p className="text-sm leading-6 text-slate-700">
+            {pool.targetRanges || "Targets not recorded"}
+          </p>
         </DetailCard>
       </section>
 
@@ -134,7 +147,9 @@ export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
       </section>
 
       <DetailCard title="Service notes">
-        <p className="text-sm leading-6 text-slate-700">{pool.serviceNotes}</p>
+        <p className="text-sm leading-6 text-slate-700">
+          {pool.serviceNotes || "No service notes recorded"}
+        </p>
       </DetailCard>
     </SectionPage>
   );

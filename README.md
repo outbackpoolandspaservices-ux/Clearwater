@@ -102,9 +102,10 @@ The first working app shell includes:
 - Mock-data Stock, Chemicals, and Van Inventory foundation, including BioGuard Australia product examples, chemical detail pages, van stock levels, low-stock examples, job usage history, and mock profitability placeholders on linked jobs and invoices.
 - Mock-data Routing and Route Optimisation foundation, including daily technician route plans, stop order, travel/service estimates, route comparison placeholders, technician mobile route view, dispatch route links, and a future GraphHopper/provider planning boundary.
 - Authentication and database foundation, including a practical Drizzle/PostgreSQL schema, Auth.js adapter tables, organisation/RBAC planning, route access helpers, environment placeholders, and migration documentation.
-- First safe database-backed workflows for Customers and Properties/Sites. These pages now read through feature data access functions with mock fallback while `CLEARWATER_DATA_SOURCE` remains `mock`.
+- First safe database-backed workflows for Customers, Properties/Sites, and Pools. These pages now read through feature data access functions with mock fallback while `CLEARWATER_DATA_SOURCE` remains `mock`.
 - Add Customer saves customer billing/contact records to PostgreSQL when a database URL is configured.
 - Add Property/Site saves service location records to PostgreSQL when a database URL is configured. Address search is prepared for future Google Places autocomplete, with manual entry available now.
+- Add Pool saves pool profile records to PostgreSQL when a database URL is configured. Detailed pool environment, water source, construction, system, chemistry target, and service-note fields are safely stored in pool notes/metadata until dedicated columns are migrated later.
 
 The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
 
@@ -193,6 +194,16 @@ Database-backed Add Property/Site:
 - Future address fields such as state, postcode, country, tenant details, and status are safely stored in notes where first-class columns are not available yet.
 - `/properties` and `/properties/[siteId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
 - `/api/admin/database/properties/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+
+Database-backed Add Pool:
+
+- Open `/pools/new` from the Pools page.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- The form links a pool to an existing property/site. It loads database properties/sites when available and falls back to mock sites if needed.
+- The current migrated `pools` table stores core fields such as property/site link, pool name, type, surface, volume, sanitiser, environment, targets, and notes where those columns exist.
+- Future pool profile fields such as shape, use type, water source, exposure, construction condition, equipment system details, chemistry targets, recurring issues, and preferences are safely stored in notes/metadata where first-class columns are not available yet.
+- `/pools` and `/pools/[poolId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
+- `/api/admin/database/pools/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 
 Database health checks:
 

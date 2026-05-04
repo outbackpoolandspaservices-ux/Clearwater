@@ -30,13 +30,22 @@ The next database-backed feature is Add Property/Site:
 - Safety: inserts only columns that exist in the current database table and stores future-only fields in notes where needed.
 - Boundary: this creates the service location only. Pools, jobs, routing, invoices, reports, and integrations remain separate workflows.
 
+The next database-backed feature is Add Pool:
+
+- Route: `/pools/new`
+- Scope: property/site link, pool identity, environment, water source, construction, sanitiser/system details, target chemistry, and service notes.
+- Save path: server action in `src/features/pools/actions.ts`
+- Database target: the current migrated `pools` table.
+- Safety: inserts only columns that exist in the current database table and stores future-only pool profile fields in notes/metadata where needed.
+- Boundary: this creates the pool profile only. Jobs, equipment migration, water testing migration, routing, invoices, reports, Xero, payments, and AI remain separate workflows.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer and property/site creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers and Properties/Sites now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, and pool creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, and Pools now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -61,7 +70,7 @@ The data functions are async and are structured so future work can replace the d
 6. Seed the first real records with `npm run db:seed`.
 7. Verify safe table counts with `npm run db:verify`.
 8. Check `/api/health/database`.
-9. Review database-created customers and properties with the protected count endpoints or a safe database admin tool.
+9. Review database-created customers, properties, and pools with the protected count endpoints or a safe database admin tool.
 10. Compare database results against mock data fields used by the UI.
 11. Keep `CLEARWATER_DATA_SOURCE="mock"` until broader workflow reads are intentionally migrated.
 12. Only after review, migrate the next workflow.
