@@ -5,6 +5,9 @@ import { SearchFilterBar } from "@/components/ui/search-filter-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCustomers } from "@/features/customers/data/customers";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CustomersPage() {
   const customers = await getCustomers();
 

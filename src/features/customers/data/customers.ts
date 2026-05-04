@@ -41,6 +41,14 @@ function formatCustomerType(value?: string | null) {
   return labels[value] ?? value;
 }
 
+function safeReadError(error: unknown) {
+  return {
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    errorMessage:
+      error instanceof Error ? error.message : "Unknown customer read error.",
+  };
+}
+
 async function getTableColumns(
   client: ReturnType<typeof createPostgresClient>,
   tableName: string,
@@ -227,7 +235,10 @@ export async function getCustomers() {
   try {
     return await getCustomersFromDatabase();
   } catch (error) {
-    console.error("Falling back to mock customers after database read failed", error);
+    console.error(
+      "Falling back to mock customers after database read failed",
+      safeReadError(error),
+    );
 
     return mockCustomers;
   }
@@ -246,7 +257,7 @@ export async function getCustomerById(customerId: string) {
   } catch (error) {
     console.error(
       "Falling back to mock customer after database detail read failed",
-      error,
+      safeReadError(error),
     );
 
     return getMockCustomerById(customerId);

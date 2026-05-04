@@ -9,6 +9,9 @@ import { getCustomerById } from "@/features/customers/data/customers";
 import { getSitesForCustomer } from "@/features/properties/data/sites";
 import { getJobsForCustomer } from "@/lib/mock-data";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type CustomerDetailPageProps = {
   params: Promise<{
     customerId: string;
