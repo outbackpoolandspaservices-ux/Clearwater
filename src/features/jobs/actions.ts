@@ -8,6 +8,10 @@ export type CreateJobFormState = {
   fieldErrors?: Partial<Record<string, string>>;
   formError?: string;
 };
+export type UpdateJobExecutionFormState = {
+  fieldErrors?: Partial<Record<string, string>>;
+  formError?: string;
+};
 
 const jobStatusValues = [
   "draft",
@@ -22,6 +26,13 @@ const jobStatusValues = [
 ] as const;
 const priorityValues = ["Low", "Normal", "High", "Urgent"] as const;
 const yesNoValues = ["no", "yes"] as const;
+const executionStatusValues = [
+  "in_progress",
+  "completed",
+  "follow_up_required",
+  "waiting_on_parts",
+  "waiting_on_customer",
+] as const;
 
 const statusToDatabaseStatus: Record<string, string> = {
   cancelled: "cancelled",
@@ -381,4 +392,178 @@ export async function createJobAction(
   }
 
   redirect("/jobs?created=job");
+}
+
+export async function updateJobExecutionAction(
+  _previousState: UpdateJobExecutionFormState,
+  formData: FormData,
+): Promise<UpdateJobExecutionFormState> {
+  const jobId = getString(formData, "jobId");
+  const status = getString(formData, "status");
+  const checklist = getStrings(formData, "checklist");
+  const checklistTotal = parsePositiveInteger(getString(formData, "checklistTotal")) ?? 0;
+  const waterTestRecorded = getString(formData, "waterTestRecorded");
+  const chemicalProductPreset = getString(formData, "chemicalProductPreset");
+  const chemicalProductName = getString(formData, "chemicalProductName");
+  const chemicalQuantity = getString(formData, "chemicalQuantity");
+  const chemicalUnit = getString(formData, "chemicalUnit");
+  const chemicalReason = getString(formData, "chemicalReason");
+  const chemicalNotes = getString(formData, "chemicalNotes");
+  const technicianNotes = getString(formData, "technicianNotes");
+  const customerNotes = getString(formData, "customerNotes");
+  const internalNotes = getString(formData, "internalNotes");
+  const followUpRequired = getString(formData, "followUpRequired");
+  const quoteRequired = getString(formData, "quoteRequired");
+  const partsRequired = getString(formData, "partsRequired");
+  const customerApprovalRequired = getString(formData, "customerApprovalRequired");
+  const fieldErrors: NonNullable<UpdateJobExecutionFormState["fieldErrors"]> = {};
+
+  if (!jobId) {
+    fieldErrors.jobId = "Job ID is missing.";
+  }
+
+  if (
+    !executionStatusValues.includes(
+      status as (typeof executionStatusValues)[number],
+    )
+  ) {
+    fieldErrors.status = "Choose a valid job status.";
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return { fieldErrors };
+  }
+
+  if (!hasDatabaseUrl()) {
+    return {
+      formError:
+        "Job execution updates are ready, but no database URL is configured yet.",
+    };
+  }
+
+  const client = createPostgresClient();
+
+  try {
+    if (!(await tableExists(client, "jobs"))) {
+      return {
+        formError:
+          "The jobs table is not available yet. Please run the protected database setup route, then try again.",
+      };
+    }
+
+    const columns = await getTableColumns(client, "jobs");
+
+    if (!columns.has("id") || !columns.has("status")) {
+      return {
+        formError:
+          "The jobs table is missing required execution columns. Please check the database setup.",
+      };
+    }
+
+    const databaseStatus = statusToDatabaseStatus[status] ?? "on_hold";
+    const chemicalName =
+      chemicalProductPreset === "Other"
+        ? chemicalProductName
+        : chemicalProductPreset || chemicalProductName;
+    const chemicalsNoted = Boolean(
+      chemicalName || chemicalQuantity || chemicalReason || chemicalNotes,
+    );
+    const completedCount = checklist.length;
+    const executionSummary = [
+      "Job execution update",
+      `Checklist completed: ${completedCount}/${checklistTotal}`,
+      `Water test recorded: ${waterTestRecorded === "yes" ? "yes" : "no"}`,
+      `Chemicals noted: ${chemicalsNoted ? "yes" : "no"}`,
+      `Follow-up required: ${followUpRequired || "no"}`,
+      `Quote required: ${quoteRequired || "no"}`,
+      `Parts required: ${partsRequired || "no"}`,
+      `Customer approval required: ${customerApprovalRequired || "no"}`,
+      checklist.length > 0 ? `Completed checklist: ${checklist.join(", ")}` : "",
+      chemicalsNoted
+        ? [
+            "Chemicals used:",
+            chemicalName ? `Product: ${chemicalName}` : "",
+            chemicalQuantity ? `Quantity: ${chemicalQuantity}` : "",
+            chemicalUnit ? `Unit: ${chemicalUnit}` : "",
+            chemicalReason ? `Reason: ${chemicalReason}` : "",
+            chemicalNotes ? `Notes: ${chemicalNotes}` : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const updates: Record<string, Date | string | null> = {
+      status: databaseStatus,
+    };
+
+    if (columns.has("technician_notes")) {
+      updates.technician_notes = [technicianNotes, executionSummary]
+        .filter(Boolean)
+        .join("\n\n");
+    }
+
+    if (columns.has("customer_notes")) {
+      updates.customer_notes = customerNotes || null;
+    }
+
+    if (columns.has("internal_notes")) {
+      updates.internal_notes = [internalNotes, executionSummary]
+        .filter(Boolean)
+        .join("\n\n");
+    }
+
+    if (columns.has("recommendations")) {
+      updates.recommendations =
+        followUpRequired === "yes" || quoteRequired === "yes"
+          ? [
+              followUpRequired === "yes" ? "Follow-up required" : "",
+              quoteRequired === "yes" ? "Quote required" : "",
+              partsRequired === "yes" ? "Parts required" : "",
+            ]
+              .filter(Boolean)
+              .join("; ")
+          : null;
+    }
+
+    if (columns.has("updated_at")) {
+      updates.updated_at = new Date();
+    }
+
+    const updateColumns = Object.keys(updates).filter((column) =>
+      columns.has(column),
+    );
+    const setClause = updateColumns
+      .map((column, index) => `${quoteIdentifier(column)} = $${index + 1}`)
+      .join(", ");
+    const values = updateColumns.map((column) => updates[column]);
+
+    await client.unsafe(
+      `update "jobs"
+       set ${setClause}
+       where "id" = $${values.length + 1}`,
+      [...values, jobId],
+    );
+  } catch (error) {
+    console.error("Job execution update failed", {
+      ...safeErrorSummary(error),
+      formFields: {
+        checklistCount: checklist.length,
+        hasChemicalNotes: Boolean(chemicalNotes),
+        jobId,
+        status,
+      },
+      error,
+    });
+
+    return {
+      formError:
+        "ClearWater could not save this job execution update. Please check the Vercel server logs for the safe job update summary.",
+    };
+  } finally {
+    await client.end();
+  }
+
+  redirect(status === "completed" ? "/technician/today?completed=job" : `/jobs/${jobId}`);
 }

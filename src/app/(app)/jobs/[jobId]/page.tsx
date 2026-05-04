@@ -51,15 +51,6 @@ const statusStepMap: Record<string, string> = {
   Paid: "Paid",
 };
 
-const technicianActions = [
-  "Send On The Way",
-  "Start Job",
-  "Add Water Test",
-  "Add Photos",
-  "Add Chemicals Used",
-  "Complete Job",
-];
-
 function statusTone(status: string) {
   if (["Completed", "Paid"].includes(status)) {
     return "success" as const;
@@ -184,24 +175,40 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
         <DetailCard title="Technician actions">
           <div className="grid gap-3 sm:grid-cols-2">
-            {technicianActions.map((action) => (
-              <button
-                key={action}
-                className={[
-                  "rounded-md px-3 py-3 text-left text-sm font-semibold transition",
-                  action === "Start Job" || action === "Complete Job"
-                    ? "bg-cyan-600 text-white hover:bg-cyan-700"
-                    : "border border-slate-200 text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800",
-                ].join(" ")}
-                type="button"
-              >
-                {action}
-              </button>
-            ))}
+            <Link
+              className="rounded-md bg-cyan-600 px-3 py-3 text-left text-sm font-semibold text-white hover:bg-cyan-700"
+              href={`/jobs/${job.id}/execute`}
+            >
+              Open Job Execution
+            </Link>
+            <Link
+              className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+              href={`/water-testing/new?jobId=${encodeURIComponent(
+                job.id,
+              )}&customerId=${encodeURIComponent(
+                job.customerId,
+              )}&propertyId=${encodeURIComponent(
+                job.siteId,
+              )}&poolId=${encodeURIComponent(job.poolId)}`}
+            >
+              Add Water Test
+            </Link>
+            <button
+              className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+              type="button"
+            >
+              Add Photos Placeholder
+            </button>
+            <button
+              className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+              type="button"
+            >
+              Send On The Way Placeholder
+            </button>
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-500">
-            These controls are placeholders only. Job state changes will be
-            connected in a later workflow.
+            Job execution now saves status, checklist, chemical notes, and
+            technician notes. Photos and customer messaging are still planned.
           </p>
         </DetailCard>
       </section>

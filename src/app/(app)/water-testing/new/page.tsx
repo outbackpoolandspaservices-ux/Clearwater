@@ -13,7 +13,20 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function NewWaterTestPage() {
+type NewWaterTestPageProps = {
+  searchParams?: Promise<{
+    customerId?: string;
+    jobId?: string;
+    poolId?: string;
+    propertyId?: string;
+    siteId?: string;
+  }>;
+};
+
+export default async function NewWaterTestPage({
+  searchParams,
+}: NewWaterTestPageProps) {
+  const params = searchParams ? await searchParams : {};
   const [customers, jobs, pools, sites] = await Promise.all([
     getCustomers(),
     getJobs(),
@@ -41,6 +54,10 @@ export default async function NewWaterTestPage() {
         pools={pools}
         sites={sites}
         technicians={technicians}
+        initialCustomerId={params.customerId ?? ""}
+        initialJobId={params.jobId ?? ""}
+        initialPoolId={params.poolId ?? ""}
+        initialSiteId={params.siteId ?? params.propertyId ?? ""}
       />
     </SectionPage>
   );

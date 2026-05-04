@@ -115,12 +115,20 @@ function ReadingField({
 
 export function WaterTestForm({
   customers,
+  initialCustomerId = "",
+  initialJobId = "",
+  initialPoolId = "",
+  initialSiteId = "",
   jobs,
   pools,
   sites,
   technicians,
 }: {
   customers: CustomerRecord[];
+  initialCustomerId?: string;
+  initialJobId?: string;
+  initialPoolId?: string;
+  initialSiteId?: string;
   jobs: JobRecord[];
   pools: PoolRecord[];
   sites: SiteRecord[];
@@ -132,9 +140,10 @@ export function WaterTestForm({
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [selectedSiteId, setSelectedSiteId] = useState("");
-  const [selectedPoolId, setSelectedPoolId] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] =
+    useState(initialCustomerId);
+  const [selectedSiteId, setSelectedSiteId] = useState(initialSiteId);
+  const [selectedPoolId, setSelectedPoolId] = useState(initialPoolId);
   const selectedPool = pools.find((pool) => pool.id === selectedPoolId);
   const guideRanges = getGuideRangesForPool(selectedPool);
   const filteredSites = selectedCustomerId
@@ -306,7 +315,11 @@ export function WaterTestForm({
           </Field>
 
           <Field label="Optional linked job/service visit">
-            <select className={inputClassName} defaultValue="" name="jobId">
+            <select
+              className={inputClassName}
+              defaultValue={initialJobId}
+              name="jobId"
+            >
               <option value="">No linked job</option>
               {filteredJobs.map((job) => (
                 <option key={job.id} value={job.id}>

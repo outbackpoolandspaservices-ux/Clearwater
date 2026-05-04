@@ -60,13 +60,22 @@ The next database-backed workflow is Water Testing foundation:
 - Product boundary: BioGuard Product Catalogue recommendations and dosing will be added later using catalogue data and pool context. This step does not hardcode incomplete dosing amounts.
 - Integration boundary: LaMotte SpinTouch Bluetooth sync is prepared structurally only and is not connected yet.
 
+The next database-backed workflow is Job Execution and Technician Today foundation:
+
+- Routes: `/technician/today` and `/jobs/[jobId]/execute`
+- Scope: technician run sheet, job execution context, maps link, practical service checklist, linked water test call-to-action, chemicals-used notes, technician/customer/internal notes, follow-up flags, and status updates.
+- Save path: server action in `src/features/jobs/actions.ts`
+- Database target: the current migrated `jobs` table.
+- Safety: updates only columns that exist in the current `jobs` table. Checklist, chemical-use details, and future-only workflow fields are stored in existing note columns until first-class execution, stock movement, attachment, and report tables are connected.
+- Boundary: this is a field execution foundation only. Stock deduction, BioGuard dosing automation, photo/file uploads, customer reports, Xero, payments, and AI remain separate workflows.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, and water test creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, and Water Testing now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, and job execution updates can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, and Technician Today now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 

@@ -213,6 +213,7 @@ export function JobsWorkflow({
                   <th className="px-5 py-3 font-semibold">Technician</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                   <th className="px-5 py-3 font-semibold">Priority</th>
+                  <th className="px-5 py-3 font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -269,6 +270,14 @@ export function JobsWorkflow({
                         <StatusBadge tone={priorityTone(job.priority)}>
                           {job.priority}
                         </StatusBadge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Link
+                          className="inline-flex min-h-9 items-center rounded-md border border-cyan-200 px-3 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+                          href={`/jobs/${job.id}/execute`}
+                        >
+                          Execute
+                        </Link>
                       </td>
                     </tr>
                   );

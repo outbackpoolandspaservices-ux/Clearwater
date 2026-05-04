@@ -108,8 +108,9 @@ The first working app shell includes:
 - Add Pool saves pool profile records to PostgreSQL when a database URL is configured. Detailed pool environment, water source, construction, system, and service-note fields are safely stored in pool notes/metadata until dedicated columns are migrated later.
 - Add Job saves service visit/work-order records to PostgreSQL when a database URL is configured. Jobs link to customers, properties/sites, and pools, with practical scheduling, checklist, recurrence placeholder, and repair metadata stored safely in notes where dedicated columns are not available yet.
 - Add Water Test saves technician water chemistry readings to PostgreSQL when a database URL is configured. Tests link to pools and optional jobs, with guide ranges displayed during testing rather than stored as pool profile targets.
+- Job Execution and Technician Today foundation reads jobs from PostgreSQL when available, links technicians from the run sheet to `/jobs/[jobId]/execute`, stores checklist/status/chemical-use notes safely on the current `jobs` table, and keeps stock deduction, photos/files, BioGuard dosing automation, and customer reports for later phases.
 
-The app UI currently uses mock data only. The database schema and Auth.js structure are prepared, but pages have not been migrated to database queries and real login is not enforced yet. Future work should migrate one workflow at a time from `src/lib/mock-data.ts` to typed database access.
+ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, and Technician execution slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
 ## Getting Started
 
@@ -219,6 +220,9 @@ Database-backed Jobs workflow:
 - Recurring jobs are captured as notes/placeholders only. A full recurring job engine is planned later.
 - Water testing is planned as the next workflow and will link to jobs and pools. Dosing logic, Xero, payments, AI, reports, and invoices remain out of scope for this step.
 - `/api/admin/database/jobs/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+- `/technician/today` and `/jobs/[jobId]/execute` now provide a database-backed job execution foundation. Execution updates can change job status and save checklist, chemical-use notes, technician notes, customer notes, internal notes, and follow-up flags to existing job note columns.
+- Chemicals used are notes only for now. Stock deduction, BioGuard dosing automation, photos/files, service reports, and customer notifications will come later.
+- `/api/admin/database/jobs/status-summary` provides a protected safe count by job status using `CLEARWATER_SETUP_KEY`.
 
 Database-backed Water Testing workflow:
 

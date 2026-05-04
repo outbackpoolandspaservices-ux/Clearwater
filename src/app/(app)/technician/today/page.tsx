@@ -1,103 +1,156 @@
 import Link from "next/link";
 
 import { SectionPage } from "@/components/app-shell/section-page";
+import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  getCustomerById,
-  getJobById,
-  getPoolById,
-  getRoutePlanForTechnician,
-  getSiteById,
-  jobs,
-} from "@/lib/mock-data";
+import { getCustomers } from "@/features/customers/data/customers";
+import { getJobsWithSource, type JobRecord } from "@/features/jobs/data/jobs";
+import { getPools } from "@/features/pools/data/pools";
+import { getSites } from "@/features/properties/data/sites";
+import { technicians } from "@/lib/mock-data";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
 
 function statusTone(status: string) {
   if (status === "Completed") {
     return "success" as const;
   }
 
-  if (["On The Way", "In Progress"].includes(status)) {
+  if (["On The Way", "On the Way", "In Progress", "In progress"].includes(status)) {
     return "warning" as const;
   }
 
   return "neutral" as const;
 }
 
-export default function TechnicianTodayPage() {
-  const today = "2026-05-02";
-  const technicianId = "tech-sam";
-  const routePlan = getRoutePlanForTechnician(technicianId, today);
-  const todayJobs = jobs
-    .filter((job) => job.scheduledDate === today && job.technicianId === technicianId)
-    .sort((a, b) => (a.scheduledTime > b.scheduledTime ? 1 : -1));
+function todayIso() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Darwin",
+  }).format(new Date());
+}
+
+function sortByRunOrder(a: JobRecord, b: JobRecord) {
+  if (a.routeOrder && b.routeOrder) {
+    return a.routeOrder - b.routeOrder;
+  }
+
+  return a.scheduledTime > b.scheduledTime ? 1 : -1;
+}
+
+export default async function TechnicianTodayPage() {
+  const [{ jobs, source }, customers, pools, sites] = await Promise.all([
+    getJobsWithSource(),
+    getCustomers(),
+    getPools(),
+    getSites(),
+  ]);
+  const today = todayIso();
+  const scheduledToday = jobs.filter(
+    (job) =>
+      job.scheduledDate === today ||
+      job.date === today ||
+      job.scheduledDate === "Today",
+  );
+  const activeJobs = scheduledToday.length > 0 ? scheduledToday : jobs;
+  const visibleJobs = activeJobs
+    .filter((job) => job.status !== "Completed" || scheduledToday.length > 0)
+    .sort(sortByRunOrder);
 
   return (
     <SectionPage
       title="Technician Today"
-      description="Mobile-friendly run sheet for assigned jobs, access notes, pool context, and technician action placeholders."
+      description="Mobile-friendly run sheet for assigned jobs, access notes, pool context, navigation, and job execution."
     >
-      {routePlan ? (
-        <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-950">
-                Today&apos;s route order
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Starts from {routePlan.startingLocation}. Route data is mock only.
-              </p>
-            </div>
-            <StatusBadge>{routePlan.optimisationStatus}</StatusBadge>
+      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+        <span className="font-semibold text-slate-900">Data source:</span>{" "}
+        {source}{" "}
+        <span className="mx-2 text-slate-300">|</span>
+        <span className="font-semibold text-slate-900">Jobs loaded:</span>{" "}
+        {visibleJobs.length}
+      </div>
+
+      <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-950">
+              Today&apos;s route order
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Showing scheduled work for {today}. Route order and travel times
+              are placeholders until routing is connected.
+            </p>
           </div>
+          <StatusBadge>Field workflow</StatusBadge>
+        </div>
+
+        {visibleJobs.length > 0 ? (
           <div className="mt-5 grid gap-3">
-            {routePlan.stops.map((stop) => {
-              const job = getJobById(stop.jobId);
-              const site = job ? getSiteById(job.siteId) : undefined;
-              const customer = job ? getCustomerById(job.customerId) : undefined;
+            {visibleJobs.map((job, index) => {
+              const site = sites.find((item) => item.id === job.siteId);
+              const customer = customers.find((item) => item.id === job.customerId);
 
               return (
                 <div
                   className="grid gap-3 rounded-lg border border-cyan-100 bg-white p-4 sm:grid-cols-[48px_1fr_auto] sm:items-center"
-                  key={stop.id}
+                  key={job.id}
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-sm font-bold text-white">
-                    {stop.stopOrder}
+                    {job.routeOrder ?? index + 1}
                   </span>
                   <div className="text-sm">
                     <p className="font-semibold text-slate-950">
-                      {job?.scheduledTime} | {customer?.name}
+                      {job.scheduledTime} | {customer?.name ?? job.customer}
                     </p>
                     <p className="mt-1 text-slate-600">
-                      {site?.address}, {site?.suburb}
+                      {site?.address ?? "Address not recorded"}
+                      {site?.suburb ? `, ${site.suburb}` : ""}
                     </p>
                     <p className="mt-1 text-slate-500">
-                      Travel {stop.estimatedTravelTime} | Service{" "}
-                      {stop.estimatedServiceDuration}
+                      Service {job.estimatedDuration} | {job.jobType}
                     </p>
                   </div>
-                  <button
-                    className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-                    type="button"
-                  >
-                    Navigation
-                  </button>
+                  {site?.address ? (
+                    <Link
+                      className="rounded-md border border-slate-200 px-3 py-2 text-center text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        `${site.address}, ${site.suburb}`,
+                      )}`}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Navigation
+                    </Link>
+                  ) : null}
                 </div>
               );
             })}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <div className="mt-5">
+            <EmptyState
+              description="No assigned jobs are available from the current data source."
+              title="No jobs for today"
+            />
+          </div>
+        )}
+      </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        {todayJobs.map((job) => {
-          const customer = getCustomerById(job.customerId);
-          const site = getSiteById(job.siteId);
-          const pool = getPoolById(job.poolId);
+        {visibleJobs.map((job) => {
+          const customer = customers.find((item) => item.id === job.customerId);
+          const site = sites.find((item) => item.id === job.siteId);
+          const pool = pools.find((item) => item.id === job.poolId);
+          const technician = technicians.find(
+            (item) => item.id === job.technicianId,
+          );
 
           return (
             <article
-              key={job.id}
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              key={job.id}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -124,46 +177,60 @@ export default function TechnicianTodayPage() {
                 <div>
                   <p className="font-medium text-slate-500">Site</p>
                   <p className="mt-1 text-slate-950">
-                    {site?.address}, {site?.suburb}
+                    {site?.address ?? "Address not recorded"}
+                    {site?.suburb ? `, ${site.suburb}` : ""}
                   </p>
-                  <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-amber-800">
-                    {site?.accessWarning}
-                  </p>
+                  {site?.accessWarning ? (
+                    <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-amber-800">
+                      {site.accessWarning}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <p className="font-medium text-slate-500">Pool</p>
                   <p className="mt-1 text-slate-950">
-                    {pool?.name} · {pool?.volumeLitres.toLocaleString("en-AU")} L
+                    {pool?.name ?? "No pool linked"}
+                    {pool?.volumeLitres
+                      ? ` - ${pool.volumeLitres.toLocaleString("en-AU")} L`
+                      : ""}
                   </p>
-                  <p className="mt-1 text-slate-600">{pool?.sanitiserType}</p>
+                  <p className="mt-1 text-slate-600">
+                    {pool?.sanitiserType ?? "Sanitiser not recorded"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-slate-500">Technician</p>
+                  <p className="mt-1 text-slate-950">
+                    {technician?.name ?? "Unassigned"}
+                  </p>
                 </div>
               </div>
 
               <div className="mt-5 grid gap-2">
-                <button
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-                  type="button"
+                {site?.address ? (
+                  <Link
+                    className="rounded-md border border-slate-200 px-3 py-2 text-center text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      `${site.address}, ${site.suburb}`,
+                    )}`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Navigation
+                  </Link>
+                ) : null}
+                <Link
+                  className="rounded-md bg-cyan-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-cyan-700"
+                  href={`/jobs/${job.id}/execute`}
                 >
-                  Navigation
-                </button>
-                <button
-                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-                  type="button"
-                >
-                  Send On The Way
-                </button>
-                <button
-                  className="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-700"
-                  type="button"
-                >
-                  Start Job
-                </button>
-                <button
-                  className="rounded-md border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                  type="button"
+                  Start / Execute Job
+                </Link>
+                <Link
+                  className="rounded-md border border-emerald-200 px-3 py-2 text-center text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+                  href={`/jobs/${job.id}/execute`}
                 >
                   Complete Job
-                </button>
+                </Link>
               </div>
 
               <Link
