@@ -5,14 +5,10 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  getCustomerById,
-  getPoolById,
-  getSiteById,
-  getTechnicianById,
-  technicians,
-  waterTests,
-} from "@/lib/mock-data";
+import type { CustomerRecord } from "@/features/customers/data/customers";
+import type { PoolRecord } from "@/features/pools/data/pools";
+import type { SiteRecord } from "@/features/properties/data/sites";
+import type { WaterTestRecord } from "@/features/water-testing/data/water-tests";
 
 const allValue = "all";
 
@@ -36,7 +32,25 @@ const entryFields = [
   "Water temperature",
 ];
 
-export function WaterTestingWorkspace() {
+type TechnicianRecord = {
+  id: string;
+  name: string;
+  role: string;
+};
+
+export function WaterTestingWorkspace({
+  customers,
+  pools,
+  sites,
+  technicians,
+  waterTests,
+}: {
+  customers: CustomerRecord[];
+  pools: PoolRecord[];
+  sites: SiteRecord[];
+  technicians: TechnicianRecord[];
+  waterTests: WaterTestRecord[];
+}) {
   const [customer, setCustomer] = useState(allValue);
   const [technician, setTechnician] = useState(allValue);
   const [alertStatus, setAlertStatus] = useState(allValue);
@@ -51,7 +65,7 @@ export function WaterTestingWorkspace() {
         (!date || test.date === date)
       );
     });
-  }, [alertStatus, customer, date, technician]);
+  }, [alertStatus, customer, date, technician, waterTests]);
 
   const customerOptions = unique(waterTests.map((test) => test.customerId));
   const alertOptions = unique(waterTests.map((test) => test.alertStatus));
@@ -67,7 +81,7 @@ export function WaterTestingWorkspace() {
           >
             <option value={allValue}>All customers</option>
             {customerOptions.map((id) => {
-              const linkedCustomer = getCustomerById(id);
+              const linkedCustomer = customers.find((item) => item.id === id);
 
               return (
                 <option key={id} value={id}>
@@ -106,12 +120,12 @@ export function WaterTestingWorkspace() {
             type="date"
             value={date}
           />
-          <button
-            className="min-h-10 rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
-            type="button"
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
+            href="/water-testing/new"
           >
             Add Water Test
-          </button>
+          </Link>
           <button
             className="min-h-10 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
             type="button"
@@ -154,10 +168,16 @@ export function WaterTestingWorkspace() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredTests.map((test) => {
-                  const linkedCustomer = getCustomerById(test.customerId);
-                  const site = getSiteById(test.siteId);
-                  const pool = getPoolById(test.poolId);
-                  const linkedTechnician = getTechnicianById(test.technicianId);
+                  const pool = pools.find((item) => item.id === test.poolId);
+                  const site =
+                    sites.find((item) => item.id === test.siteId) ??
+                    sites.find((item) => item.id === pool?.siteId);
+                  const linkedCustomer =
+                    customers.find((item) => item.id === test.customerId) ??
+                    customers.find((item) => item.id === site?.customerId);
+                  const linkedTechnician = technicians.find(
+                    (item) => item.id === test.technicianId,
+                  );
 
                   return (
                     <tr key={test.id} className="hover:bg-slate-50">

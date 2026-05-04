@@ -5,15 +5,20 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobById } from "@/features/jobs/data/jobs";
+import { getPoolById } from "@/features/pools/data/pools";
+import { getSiteById } from "@/features/properties/data/sites";
+import { getWaterTestById } from "@/features/water-testing/data/water-tests";
+import {
+  bioGuardRecommendationCategories,
+  getGuideRangesForPool,
+  readingStatus,
+} from "@/features/water-testing/guide-ranges";
 import {
   getBioGuardProductById,
   getChemicalRecommendationsForTest,
-  getCustomerById,
-  getJobById,
-  getPoolById,
-  getSiteById,
   getTechnicianById,
-  getWaterTestById,
 } from "@/lib/mock-data";
 
 const alertLabels = [
@@ -39,27 +44,50 @@ type WaterTestDetailPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export default async function WaterTestDetailPage({
   params,
 }: WaterTestDetailPageProps) {
   const { testId } = await params;
-  const test = getWaterTestById(testId);
+  const test = await getWaterTestById(testId);
 
   if (!test) {
     notFound();
   }
 
-  const customer = getCustomerById(test.customerId);
-  const site = getSiteById(test.siteId);
-  const pool = getPoolById(test.poolId);
+  const pool = await getPoolById(test.poolId);
+  const site =
+    (test.siteId ? await getSiteById(test.siteId) : undefined) ??
+    (pool?.siteId ? await getSiteById(pool.siteId) : undefined);
+  const customer =
+    (test.customerId ? await getCustomerById(test.customerId) : undefined) ??
+    (site?.customerId ? await getCustomerById(site.customerId) : undefined);
   const technician = getTechnicianById(test.technicianId);
-  const linkedJob = test.jobId ? getJobById(test.jobId) : undefined;
+  const linkedJob = test.jobId ? await getJobById(test.jobId) : undefined;
   const recommendations = getChemicalRecommendationsForTest(test.id);
+  const guideRanges = getGuideRangesForPool(pool);
+  const chemistryReadings = [
+    ["Free chlorine", test.freeChlorine, guideRanges.freeChlorine],
+    ["Total chlorine", test.totalChlorine, guideRanges.totalChlorine],
+    ["Combined chlorine", test.combinedChlorine, guideRanges.combinedChlorine],
+    ["pH", test.ph, guideRanges.ph],
+    ["Total alkalinity", test.alkalinity, guideRanges.totalAlkalinity],
+    ["Calcium hardness", test.calciumHardness, guideRanges.calciumHardness],
+    ["Cyanuric acid", test.cyanuricAcid, guideRanges.cyanuricAcid],
+    ["Salt", test.salt, guideRanges.salt],
+    ["Phosphate", test.phosphate, guideRanges.phosphate],
+    ["TDS", test.tds ?? "Not tested", guideRanges.tds],
+    ["Water temperature", test.waterTemperature, guideRanges.waterTemperature],
+  ] as const;
 
   return (
     <SectionPage
       title={`Water Test: ${pool?.name ?? test.id}`}
-      description="Mock water test detail with chemistry readings, target ranges, alerts, BioGuard product recommendations, and future SpinTouch-ready structure."
+      description="Water test detail with chemistry readings, guide ranges, simple interpretation, and future SpinTouch/BioGuard-ready structure."
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={test.alertStatus === "Balanced" ? "success" : "warning"}>
@@ -159,26 +187,25 @@ export default async function WaterTestDetailPage({
           />
         </DetailCard>
 
-        <DetailCard title="Target chemistry ranges">
+        <DetailCard title="Guide chemistry ranges">
           <p className="text-sm leading-6 text-slate-700">
-            {pool?.targetRanges ?? "No target range recorded for this pool."}
+            These are practical guide ranges shown during testing, not fixed pool
+            profile targets. Future logic will adjust by pool type, sanitiser
+            system, chlorinator/equipment settings, surface, water source, and
+            BioGuard catalogue rules.
           </p>
+          {pool?.sanitiserType?.toLowerCase().includes("salt") ? (
+            <p className="mt-3 text-sm leading-6 text-amber-700">
+              Salt guide should be based on chlorinator manufacturer requirement.
+              TODO: connect detailed Equipment/chlorinator profiles.
+            </p>
+          ) : null}
         </DetailCard>
       </section>
 
       <DetailCard title="Full water chemistry readings">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {[
-            ["Free chlorine", test.freeChlorine],
-            ["Total chlorine", test.totalChlorine],
-            ["pH", test.ph],
-            ["Total alkalinity", test.alkalinity],
-            ["Calcium hardness", test.calciumHardness],
-            ["Cyanuric acid", test.cyanuricAcid],
-            ["Salt", test.salt],
-            ["Phosphate", test.phosphate],
-            ["Water temperature", test.waterTemperature],
-          ].map(([label, value]) => (
+          {chemistryReadings.map(([label, value, guide]) => (
             <div
               key={label}
               className="rounded-md border border-slate-200 bg-slate-50 p-4"
@@ -186,6 +213,14 @@ export default async function WaterTestDetailPage({
               <p className="text-sm font-medium text-slate-500">{label}</p>
               <p className="mt-2 text-lg font-semibold text-slate-950">
                 {value}
+              </p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-cyan-700">
+                {readingStatus(value, guide)}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Guide: {guide.low ?? 0}
+                {guide.high !== undefined ? ` - ${guide.high}` : "+"}{" "}
+                {guide.unit}
               </p>
             </div>
           ))}
@@ -262,10 +297,17 @@ export default async function WaterTestDetailPage({
             })}
           </div>
         ) : (
-          <EmptyState
-            description="Balanced tests may not need a corrective product recommendation."
-            title="No corrective dosing recommended"
-          />
+          <div className="space-y-4">
+            <EmptyState
+              description="BioGuard product recommendations will later use catalogue data, pool context, and technician review. No dosing is calculated yet."
+              title="Product intelligence planned"
+            />
+            <div className="flex flex-wrap gap-2">
+              {bioGuardRecommendationCategories.map((category) => (
+                <StatusBadge key={category}>{category}</StatusBadge>
+              ))}
+            </div>
+          </div>
         )}
       </DetailCard>
 
