@@ -49,6 +49,13 @@ function safeReadError(error: unknown) {
   };
 }
 
+function logCustomerSource(source: "database" | "mock", count: number) {
+  console.info("ClearWater customers data source", {
+    count,
+    source,
+  });
+}
+
 async function getTableColumns(
   client: ReturnType<typeof createPostgresClient>,
   tableName: string,
@@ -229,16 +236,23 @@ async function getCustomerFromDatabaseById(
 
 export async function getCustomers() {
   if (!hasDatabaseUrl()) {
+    logCustomerSource("mock", mockCustomers.length);
+
     return mockCustomers;
   }
 
   try {
-    return await getCustomersFromDatabase();
+    const databaseCustomers = await getCustomersFromDatabase();
+
+    logCustomerSource("database", databaseCustomers.length);
+
+    return databaseCustomers;
   } catch (error) {
     console.error(
       "Falling back to mock customers after database read failed",
       safeReadError(error),
     );
+    logCustomerSource("mock", mockCustomers.length);
 
     return mockCustomers;
   }
@@ -246,19 +260,41 @@ export async function getCustomers() {
 
 export async function getCustomerById(customerId: string) {
   if (!hasDatabaseUrl()) {
+    console.info("ClearWater customer detail data source", {
+      customerId,
+      source: "mock",
+    });
+
     return getMockCustomerById(customerId);
   }
 
   try {
-    return (
-      (await getCustomerFromDatabaseById(customerId)) ??
-      getMockCustomerById(customerId)
-    );
+    const databaseCustomer = await getCustomerFromDatabaseById(customerId);
+
+    if (databaseCustomer) {
+      console.info("ClearWater customer detail data source", {
+        customerId,
+        source: "database",
+      });
+
+      return databaseCustomer;
+    }
+
+    console.info("ClearWater customer detail data source", {
+      customerId,
+      source: "mock",
+    });
+
+    return getMockCustomerById(customerId);
   } catch (error) {
     console.error(
       "Falling back to mock customer after database detail read failed",
       safeReadError(error),
     );
+    console.info("ClearWater customer detail data source", {
+      customerId,
+      source: "mock",
+    });
 
     return getMockCustomerById(customerId);
   }

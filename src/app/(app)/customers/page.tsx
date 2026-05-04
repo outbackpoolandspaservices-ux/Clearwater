@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { getCustomers } from "@/features/customers/data/customers";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 export default async function CustomersPage() {
