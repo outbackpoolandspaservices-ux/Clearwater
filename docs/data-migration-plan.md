@@ -12,11 +12,22 @@ Customers, Sites, and Pools now have a data access layer:
 
 The app pages for customers, properties/sites, and pools call these functions instead of importing those records directly from `src/lib/mock-data.ts`.
 
+The first real database-backed feature is now Add Customer:
+
+- Route: `/customers/new`
+- Scope: customer contact details, customer type, billing address, communication preference, internal notes, and active/inactive status.
+- Save path: server action in `src/features/customers/actions.ts`
+- Database target: `customers` table through Drizzle.
+- Safety: the form fails safely if no database URL is configured and does not expose database errors to users.
+- Boundary: this creates a billing/customer profile only. Service sites/properties, pools, jobs, portal access, and accounting records remain separate workflows.
+
 ## Current Behaviour
 
-The UI still uses mock fallback data.
+The UI still uses mock fallback data for reads.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
+
+Customer creation is the first write workflow that can save to PostgreSQL while the customer list continues to show mock data. This lets ClearWater test safe writes before switching list/detail pages to database reads.
 
 ## Database-Ready Shape
 
@@ -39,17 +50,21 @@ The data functions are async and are structured so future work can replace the d
 4. Generate the database migration with `npm run db:generate`.
 5. Apply the migration with `npm run db:migrate`.
 6. Seed the first real records with `npm run db:seed`.
-7. Check `/api/health/database`.
-8. Implement Drizzle queries in the database branches of the data access files.
-9. Compare database results against mock data fields used by the UI.
-10. Switch `CLEARWATER_DATA_SOURCE` to `database` in a safe development environment.
-11. Only after review, migrate the next workflow.
+7. Verify safe table counts with `npm run db:verify`.
+8. Check `/api/health/database`.
+9. Implement Drizzle queries in the database branches of the data access files.
+10. Compare database results against mock data fields used by the UI.
+11. Review database-created customers with `npm run db:verify` or a safe database admin tool.
+12. Switch `CLEARWATER_DATA_SOURCE` to `database` in a safe development environment only after read queries are implemented.
+13. Only after review, migrate the next workflow.
 
 Drizzle is configured in `drizzle.config.ts` with:
 
 - Schema path: `./src/db/schema.ts`
 - Migrations output folder: `./drizzle`
 - Supported database URL variables: `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, and `POSTGRES_URL_NON_POOLING`
+
+The first current-schema migration is `drizzle/0000_curvy_marvel_apes.sql`. Older generated migrations were replaced because they described an earlier schema and caused interactive Drizzle conflicts.
 
 ## Seed Foundation
 
@@ -65,6 +80,44 @@ Current seed scope:
 - Equipment: pumps, filters, chlorinator, and heater examples.
 
 The seed runner exits safely with a clear message if `DATABASE_URL` is not configured.
+
+`npm run db:verify` prints safe table counts for the initial migration scope without exposing sensitive data:
+
+- `organisations`
+- `users`
+- `roles`
+- `user_roles`
+- `customers`
+- `sites`
+- `pools`
+- `equipment`
+
+## One-Time Setup Route
+
+The route `/api/admin/database/setup` can run the prepared migration and seed workflow after deployment.
+
+Safety rules:
+
+- Requires `CLEARWATER_SETUP_KEY`.
+- Accepts the key in the `x-clearwater-setup-key` header, or as a `CLEARWATER_SETUP_KEY` / `setupKey` query parameter.
+- Returns `401` when the key is missing or wrong.
+- Uses `POST` for the actual setup run.
+- Does not reveal database credentials.
+- Keeps `CLEARWATER_DATA_SOURCE` unchanged, so the UI can remain in mock mode.
+
+Expected JSON summary includes:
+
+- migration status
+- seed status
+- safe table counts
+- data source mode
+
+Recommended after use:
+
+1. Confirm `/api/health/database` reports connected.
+2. Confirm the setup response includes non-zero counts for seeded tables.
+3. Rotate or remove `CLEARWATER_SETUP_KEY` after the one-time setup has succeeded.
+4. Keep `CLEARWATER_DATA_SOURCE="mock"` until the database query branches are reviewed.
 
 ## Testing A Real Database Connection
 

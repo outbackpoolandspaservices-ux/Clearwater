@@ -64,8 +64,28 @@ The first migration seam has been added for Customers, Sites, and Pools. See `do
 - The app checks `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, and `POSTGRES_URL_NON_POOLING` in that order.
 - `drizzle.config.ts` uses the same database URL priority and writes migrations to `./drizzle`.
 - `npm run db:check` prints whether a database URL is configured without revealing it.
+- `npm run db:migrate` is wrapped by `src/db/run-migrate.ts` and skips safely if no database URL is configured.
+- `npm run db:verify` prints safe table counts for the initial seed scope.
 - `/api/health/database` can be used to test a real connection without exposing the URL.
 - `/settings/database` provides a friendly setup checklist.
+
+## Current Migration
+
+The first current-schema migration is:
+
+- `drizzle/0000_curvy_marvel_apes.sql`
+
+It creates the ClearWater foundation tables while the UI remains in mock mode.
+
+## Setup Route
+
+`/api/admin/database/setup` is a protected operational route for running the prepared migration and seed workflow after deployment.
+
+- It requires `CLEARWATER_SETUP_KEY`.
+- It should be called with `POST`.
+- It returns safe migration, seed, and table-count information.
+- It does not switch `CLEARWATER_DATA_SOURCE` away from `mock`.
+- Rotate or remove the setup key after successful setup.
 
 Recommended first migrations:
 
