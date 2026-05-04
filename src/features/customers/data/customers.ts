@@ -1,8 +1,7 @@
-import {
-  customers as mockCustomers,
-  getCustomerById as getMockCustomerById,
-} from "@/lib/mock-data";
 import { createPostgresClient, hasDatabaseUrl } from "@/db/connection";
+import { customers, getCustomerById as getMockCustomerById } from "@/lib/mock-data";
+
+const mockCustomers = customers;
 
 export type CustomerRecord = (typeof mockCustomers)[number];
 
