@@ -76,6 +76,7 @@ The next database-backed workflow is Service Report foundation:
 - Save path: server action in `src/features/reports/actions.ts`
 - Database target: the current migrated `reports` table.
 - Migration: `drizzle/0002_add_reports_table.sql` safely creates the missing `reports` table and report enums without switching the app out of mock mode.
+- Verification: `/api/admin/database/reports/count` and the protected setup route table counts can confirm the reports table after migration.
 - Safety: inserts only columns that exist in the current `reports` table. Richer service report fields are stored in summary, findings, and recommendations until dedicated report sections, attachments, and delivery tables are connected.
 - Boundary: this is a preview and draft workflow only. Real PDF generation, automatic email/SMS sending, photo/file rendering, customer portal delivery, and AI-generated wording remain separate phases.
 

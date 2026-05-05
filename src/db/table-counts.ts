@@ -10,6 +10,7 @@ export const setupCountTables = [
   "roles",
   "user_roles",
   "sites",
+  "reports",
 ] as const;
 
 export type SetupTableCountValue = number | "missing";

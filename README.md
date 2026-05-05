@@ -233,6 +233,7 @@ Database-backed Service Report workflow:
 - `/reports` and `/reports/[reportId]` attempt PostgreSQL reads when a database URL is configured and fall back to mock reports if the database is unavailable.
 - The current migrated `reports` table stores linked customer, site, pool, job, water test, report number, type, status, summary, findings, and recommendations.
 - If the deployed database does not have `reports` yet, run `npm run db:migrate` or the protected database setup route after deploying this migration. `/api/admin/database/reports/count` should then return a real count instead of `reports: "missing"`.
+- The protected database setup response now includes `reports` in table counts so the latest migration can be confirmed without exposing database credentials.
 - Rich report details such as checklist summary, chemical-use notes, technician notes, and customer-facing notes are derived from linked job notes for now.
 - PDF download, Send to Customer, Email Report, View Customer Portal, photo/file rendering, and AI-generated wording are placeholders only.
 - `/api/admin/database/reports/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
