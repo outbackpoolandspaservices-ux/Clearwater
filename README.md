@@ -208,7 +208,7 @@ Database setup steps:
 8. Check `/api/health/database`.
 9. Switch `CLEARWATER_DATA_SOURCE` to `database` only after the data access functions have real Drizzle queries and the seeded records have been reviewed.
 
-The seed currently prepares organisation, users/roles, customers, sites, pools, and equipment records. It does not migrate jobs, water testing, reports, invoices, routing, or portal data.
+The seed currently prepares organisation, users/roles, customers, sites, pools, equipment, BioGuard/Dryden Aqua product records, and starter van stock. Runtime workflows for jobs, water testing, reports, quotes, invoices, attachments, and chemical usage create their own database records as the app is used.
 
 Database-backed Add Customer:
 
@@ -373,6 +373,75 @@ Example:
 curl -X POST "https://your-clearwater-domain.example/api/admin/database/setup" \
   -H "x-clearwater-setup-key: your-long-random-setup-key"
 ```
+
+## Vercel Post-Deployment Checklist
+
+Run the protected setup route after each deployment that includes new migrations:
+
+```powershell
+Invoke-RestMethod -Method POST "https://clearwater-six.vercel.app/api/admin/database/setup" -Headers @{"x-clearwater-setup-key"="YOUR_SETUP_KEY"}
+```
+
+Then run protected count checks with the same `x-clearwater-setup-key` header:
+
+- `/api/admin/database/chemicals/count`
+- `/api/admin/database/stock/count`
+- `/api/admin/database/job-chemical-usage/count`
+- `/api/admin/database/quotes/count`
+- `/api/admin/database/invoices/count`
+- `/api/admin/database/attachments/count`
+- `/api/admin/database/reports/count`
+- `/api/admin/database/customers/count`
+- `/api/admin/database/properties/count`
+- `/api/admin/database/pools/count`
+- `/api/admin/database/water-tests/count`
+
+Browser smoke-test these routes:
+
+- `/dashboard`
+- `/customers`
+- `/customers/new`
+- `/properties`
+- `/properties/new`
+- `/pools`
+- `/pools/new`
+- `/jobs`
+- `/jobs/new`
+- `/technician/today`
+- `/water-testing`
+- `/water-testing/new`
+- `/reports`
+- `/chemicals`
+- `/stock`
+- `/stock/new`
+- `/quotes`
+- `/quotes/new`
+- `/invoices`
+- `/invoices/new`
+- `/portal`
+- `/settings/database`
+- `/api/health/database`
+
+Workflow smoke tests:
+
+- Add customer.
+- Add property/site.
+- Add pool.
+- Add job.
+- Execute job.
+- Add water test.
+- Generate service report.
+- Add stock.
+- Add chemical usage.
+- Create quote.
+- Create invoice.
+- Check portal display.
+
+Safety notes:
+
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while the scoped database-backed workflows continue to mature.
+- Keep `CLEARWATER_ENFORCE_AUTH="false"` until login and role access are fully tested.
+- Xero, payments, SMS/email sending, real PDF generation, storage uploads, and offline mobile packaging remain future phases.
 
 ## Documentation
 

@@ -217,8 +217,10 @@ Current seed scope:
 - Sites: Flynn Drive, Gillen Rental, Larapinta Townhouse, Desert Springs Resort, and Eastside Family Pool.
 - Pools: family pool, rental plunge pool, commercial spa, and Eastside pool.
 - Equipment: pumps, filters, chlorinator, and heater examples.
+- BioGuard/Dryden Aqua product records from the product intelligence foundation.
+- Starter van stock linked to those product records with deterministic UUID stock IDs.
 
-The seed runner exits safely with a clear message if `DATABASE_URL` is not configured.
+The seed runner exits safely with a clear message if `DATABASE_URL` is not configured. Seed groups are labelled so setup failures identify the failing area, such as organisations, users/roles, customers, properties, pools, equipment, BioGuard products, or stock, without exposing credentials.
 
 `npm run db:verify` prints safe table counts for the initial migration scope without exposing sensitive data:
 
@@ -258,6 +260,76 @@ Recommended after use:
 3. Rotate or remove `CLEARWATER_SETUP_KEY` after the one-time setup has succeeded.
 4. Keep `CLEARWATER_DATA_SOURCE="mock"` until the database query branches are reviewed.
 
+## Vercel Post-Deployment Test Checklist
+
+Run database setup after deploying migration changes:
+
+```powershell
+Invoke-RestMethod -Method POST "https://clearwater-six.vercel.app/api/admin/database/setup" -Headers @{"x-clearwater-setup-key"="YOUR_SETUP_KEY"}
+```
+
+Run protected count checks with the same setup-key header:
+
+- `/api/admin/database/chemicals/count`
+- `/api/admin/database/stock/count`
+- `/api/admin/database/job-chemical-usage/count`
+- `/api/admin/database/quotes/count`
+- `/api/admin/database/invoices/count`
+- `/api/admin/database/attachments/count`
+- `/api/admin/database/reports/count`
+- `/api/admin/database/customers/count`
+- `/api/admin/database/properties/count`
+- `/api/admin/database/pools/count`
+- `/api/admin/database/water-tests/count`
+
+Open these browser routes:
+
+- `/dashboard`
+- `/customers`
+- `/customers/new`
+- `/properties`
+- `/properties/new`
+- `/pools`
+- `/pools/new`
+- `/jobs`
+- `/jobs/new`
+- `/technician/today`
+- `/water-testing`
+- `/water-testing/new`
+- `/reports`
+- `/chemicals`
+- `/stock`
+- `/stock/new`
+- `/quotes`
+- `/quotes/new`
+- `/invoices`
+- `/invoices/new`
+- `/portal`
+- `/settings/database`
+- `/api/health/database`
+
+Run these workflow checks:
+
+- Add customer.
+- Add property/site.
+- Add pool.
+- Add job.
+- Execute job.
+- Add water test.
+- Generate service report.
+- Add stock.
+- Add chemical usage.
+- Create quote.
+- Create invoice.
+- Check portal display.
+
+Keep these safety settings until the next planned phase:
+
+- `CLEARWATER_DATA_SOURCE="mock"`
+- `CLEARWATER_ENFORCE_AUTH="false"`
+
+Future phases still include Xero, payments, SMS/email, real PDF generation, storage uploads, and offline/mobile packaging.
+
 ## Testing A Real Database Connection
 
 Use these checks before switching any UI to database mode:
@@ -274,17 +346,17 @@ Use these checks before switching any UI to database mode:
 
 The database health endpoint reports whether a connection succeeds, but it never reveals the database URL or password.
 
-## Not Migrated Yet
+## Still Future Or Placeholder
 
-These still use mock data directly and should stay that way for now:
+These areas are intentionally not complete production integrations yet:
 
-- Dispatch
-- Visits
-- Chemical dosing
-- Quotes
-- Invoices
-- Payments
-- Reports
-- Customer portal
-- Routing
-- AI
+- Dispatch drag-and-drop scheduling and live route optimisation.
+- Full visit/recurrence engine.
+- Exact BioGuard dosing automation and automatic customer-facing chemical advice.
+- Xero sync and payment gateway processing.
+- SMS/email delivery.
+- Real PDF generation.
+- Real file upload/storage.
+- Customer authentication enforcement.
+- Routing provider connection.
+- AI-assisted recommendations.
