@@ -8,6 +8,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { QuoteRecord } from "@/features/quotes/data/quotes";
 
 const allValue = "all";
+type QuoteInitialFilters = {
+  status?: string;
+};
 
 function unique(values: string[]) {
   return Array.from(new Set(values));
@@ -19,15 +22,45 @@ function statusTone(status: string) {
   return "neutral" as const;
 }
 
-export function QuotesWorkspace({ quotes }: { quotes: QuoteRecord[] }) {
-  const [status, setStatus] = useState(allValue);
+function normalise(value: string) {
+  return value.trim().toLowerCase().replaceAll("_", "-").replaceAll(" ", "-");
+}
+
+function resolveStatusFilter(status: string | undefined) {
+  if (!status) return allValue;
+
+  return normalise(status) === "pending" ? "pending" : status;
+}
+
+function matchesStatusFilter(quote: QuoteRecord, status: string) {
+  if (status === allValue) return true;
+
+  if (status === "pending") {
+    return ["draft", "sent", "pending", "awaiting-approval"].includes(
+      normalise(quote.status),
+    );
+  }
+
+  return normalise(quote.status) === normalise(status);
+}
+
+export function QuotesWorkspace({
+  initialFilters,
+  quotes,
+}: {
+  initialFilters?: QuoteInitialFilters;
+  quotes: QuoteRecord[];
+}) {
+  const [status, setStatus] = useState(() =>
+    resolveStatusFilter(initialFilters?.status),
+  );
   const [customer, setCustomer] = useState(allValue);
   const [date, setDate] = useState("");
 
   const filteredQuotes = useMemo(() => {
     return quotes.filter((quote) => {
       return (
-        (status === allValue || quote.status === status) &&
+        matchesStatusFilter(quote, status) &&
         (customer === allValue || quote.customerId === customer) &&
         (!date || quote.quoteDate === date)
       );
@@ -46,6 +79,7 @@ export function QuotesWorkspace({ quotes }: { quotes: QuoteRecord[] }) {
             value={status}
           >
             <option value={allValue}>All statuses</option>
+            <option value="pending">Pending approval</option>
             {unique(quotes.map((quote) => quote.status)).map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -97,6 +131,7 @@ export function QuotesWorkspace({ quotes }: { quotes: QuoteRecord[] }) {
           <p className="mt-1 text-sm text-slate-500">
             Quotes read from PostgreSQL when available with mock fallback.
             Sending and conversion actions are placeholders.
+            {status === "pending" ? " Showing pending quote drill-down." : ""}
           </p>
         </div>
         {filteredQuotes.length > 0 ? (

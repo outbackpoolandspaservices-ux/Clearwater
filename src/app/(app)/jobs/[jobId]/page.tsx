@@ -72,6 +72,7 @@ type JobDetailPageProps = {
   params: Promise<{
     jobId: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export const dynamic = "force-dynamic";
@@ -79,8 +80,16 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function JobDetailPage({ params }: JobDetailPageProps) {
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function JobDetailPage({
+  params,
+  searchParams,
+}: JobDetailPageProps) {
   const { jobId } = await params;
+  const query = searchParams ? await searchParams : {};
   const job = await getJobById(jobId);
 
   if (!job) {
@@ -105,6 +114,11 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   const profitability = getJobProfitabilityByJobId(job.id);
   const activeStep = statusStepMap[job.status] ?? "New";
   const activeStepIndex = workflowSteps.indexOf(activeStep);
+  const scheduleRequested = firstParam(query.action) === "schedule";
+  const needsScheduling =
+    job.scheduledDate === "Unscheduled" ||
+    job.scheduledTime === "Unscheduled" ||
+    ["Draft", "Ready", "Ready to Schedule"].includes(job.status);
 
   return (
     <SectionPage
@@ -132,6 +146,22 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           </Link>
         ) : null}
       </div>
+
+      {scheduleRequested || needsScheduling ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">Scheduling action</p>
+          <p className="mt-1">
+            Full scheduling/edit workflow is planned. Use the dispatch board for
+            now to review this job and assign a run time.
+          </p>
+          <Link
+            className="mt-3 inline-flex min-h-9 items-center rounded-md bg-white px-3 font-semibold text-amber-900 hover:bg-amber-100"
+            href={`/dispatch?jobId=${encodeURIComponent(job.id)}`}
+          >
+            Open Dispatch Board
+          </Link>
+        </div>
+      ) : null}
 
       <DetailCard title="Workflow status">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
@@ -201,6 +231,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               href={`/reports/new/service?jobId=${encodeURIComponent(job.id)}`}
             >
               Create Service Report
+            </Link>
+            <Link
+              className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+              href={`/dispatch?jobId=${encodeURIComponent(job.id)}`}
+            >
+              Schedule / Dispatch Placeholder
             </Link>
             <button
               className="rounded-md border border-slate-200 px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"

@@ -11,7 +11,16 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function JobsPage() {
+type JobsPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function JobsPage({ searchParams }: JobsPageProps) {
+  const params = searchParams ? await searchParams : {};
   const [customers, jobsResult, pools, sites] = await Promise.all([
     getCustomers(),
     getJobsWithSource(),
@@ -32,6 +41,12 @@ export default async function JobsPage() {
         recurringJobs={recurringJobs}
         sites={sites}
         technicians={technicians}
+        initialFilters={{
+          date: firstParam(params.date),
+          scheduled: firstParam(params.scheduled),
+          status: firstParam(params.status),
+          technician: firstParam(params.technician),
+        }}
       />
     </SectionPage>
   );

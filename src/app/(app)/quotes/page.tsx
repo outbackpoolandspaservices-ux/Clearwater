@@ -7,7 +7,16 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function QuotesPage() {
+type QuotesPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function QuotesPage({ searchParams }: QuotesPageProps) {
+  const params = searchParams ? await searchParams : {};
   const { quotes } = await getQuotesWithSource();
 
   return (
@@ -15,7 +24,12 @@ export default async function QuotesPage() {
       title="Quotes"
       description="Quote drafting, line items, customer approval, expiry tracking, and conversion into jobs or invoices."
     >
-      <QuotesWorkspace quotes={quotes} />
+      <QuotesWorkspace
+        initialFilters={{
+          status: firstParam(params.status),
+        }}
+        quotes={quotes}
+      />
     </SectionPage>
   );
 }

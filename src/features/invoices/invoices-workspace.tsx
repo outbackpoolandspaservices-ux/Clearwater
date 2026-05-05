@@ -8,6 +8,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import type { InvoiceRecord } from "@/features/invoices/data/invoices";
 
 const allValue = "all";
+type InvoiceInitialFilters = {
+  status?: string;
+};
 
 function unique(values: string[]) {
   return Array.from(new Set(values));
@@ -27,8 +30,38 @@ function xeroTone(status: string) {
   return "neutral" as const;
 }
 
-export function InvoicesWorkspace({ invoices }: { invoices: InvoiceRecord[] }) {
-  const [paymentStatus, setPaymentStatus] = useState(allValue);
+function normalise(value: string) {
+  return value.trim().toLowerCase().replaceAll("_", "-").replaceAll(" ", "-");
+}
+
+function resolvePaymentStatus(status: string | undefined) {
+  if (!status) return allValue;
+
+  return normalise(status) === "unpaid" ? "unpaid" : status;
+}
+
+function matchesPaymentFilter(invoice: InvoiceRecord, status: string) {
+  if (status === allValue) return true;
+
+  if (status === "unpaid") {
+    return ["unpaid", "overdue", "part-paid", "partially-paid"].includes(
+      normalise(invoice.paymentStatus),
+    );
+  }
+
+  return normalise(invoice.paymentStatus) === normalise(status);
+}
+
+export function InvoicesWorkspace({
+  initialFilters,
+  invoices,
+}: {
+  initialFilters?: InvoiceInitialFilters;
+  invoices: InvoiceRecord[];
+}) {
+  const [paymentStatus, setPaymentStatus] = useState(() =>
+    resolvePaymentStatus(initialFilters?.status),
+  );
   const [xeroStatus, setXeroStatus] = useState(allValue);
   const [customer, setCustomer] = useState(allValue);
   const [date, setDate] = useState("");
@@ -36,8 +69,7 @@ export function InvoicesWorkspace({ invoices }: { invoices: InvoiceRecord[] }) {
   const filteredInvoices = useMemo(() => {
     return invoices.filter((invoice) => {
       return (
-        (paymentStatus === allValue ||
-          invoice.paymentStatus === paymentStatus) &&
+        matchesPaymentFilter(invoice, paymentStatus) &&
         (xeroStatus === allValue || invoice.xeroSyncStatus === xeroStatus) &&
         (customer === allValue || invoice.customerId === customer) &&
         (!date || invoice.invoiceDate === date)
@@ -57,6 +89,7 @@ export function InvoicesWorkspace({ invoices }: { invoices: InvoiceRecord[] }) {
             value={paymentStatus}
           >
             <option value={allValue}>All payment statuses</option>
+            <option value="unpaid">Unpaid / overdue</option>
             {unique(invoices.map((invoice) => invoice.paymentStatus)).map(
               (item) => (
                 <option key={item} value={item}>
@@ -124,6 +157,9 @@ export function InvoicesWorkspace({ invoices }: { invoices: InvoiceRecord[] }) {
           <p className="mt-1 text-sm text-slate-500">
             Invoices read from PostgreSQL when available with mock fallback.
             Xero and payment gateway integration are placeholders.
+            {paymentStatus === "unpaid"
+              ? " Showing unpaid invoice drill-down."
+              : ""}
           </p>
         </div>
         {filteredInvoices.length > 0 ? (

@@ -27,25 +27,42 @@ function stockTone(status: string) {
 }
 
 export function StockWorkspace({
+  initialSearch,
   products,
   stockRecords,
   usageRecords,
 }: {
+  initialSearch?: string;
   products: ChemicalProductRecord[];
   stockRecords: StockRecord[];
   usageRecords: StockUsageRecord[];
 }) {
+  const [search, setSearch] = useState(initialSearch ?? "");
   const [technician, setTechnician] = useState(allValue);
   const [category, setCategory] = useState(allValue);
   const [lowStock, setLowStock] = useState(allValue);
   const [brand, setBrand] = useState(allValue);
 
   const filteredStock = useMemo(() => {
+    const searchText = search.trim().toLowerCase();
+
     return stockRecords.filter((stock) => {
       const product = products.find((item) => item.id === stock.productId);
       const isLow = stock.stockStatus === "Low stock";
+      const haystack = [
+        product?.name,
+        product?.brand,
+        product?.category,
+        stock.vanName,
+        stock.supplier,
+        stock.stockStatus,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
       return (
+        (!searchText || haystack.includes(searchText)) &&
         (technician === allValue || stock.technicianId === technician) &&
         (category === allValue || product?.category === category) &&
         (lowStock === allValue ||
@@ -53,12 +70,19 @@ export function StockWorkspace({
         (brand === allValue || product?.brand === brand)
       );
     });
-  }, [brand, category, lowStock, products, stockRecords, technician]);
+  }, [brand, category, lowStock, products, search, stockRecords, technician]);
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="grid gap-3 lg:grid-cols-[repeat(4,1fr)_auto_auto_auto_auto] lg:items-center">
+        <div className="grid gap-3 lg:grid-cols-[1.3fr_repeat(4,1fr)_auto_auto_auto_auto] lg:items-center">
+          <input
+            className="min-h-10 rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search products, vans, suppliers, or stock status"
+            type="search"
+            value={search}
+          />
           <select
             className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             onChange={(event) => setTechnician(event.target.value)}

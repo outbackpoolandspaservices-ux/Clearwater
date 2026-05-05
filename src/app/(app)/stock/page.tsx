@@ -8,7 +8,16 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function StockPage() {
+type StockPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function StockPage({ searchParams }: StockPageProps) {
+  const params = searchParams ? await searchParams : {};
   const [{ stock, usage }, products] = await Promise.all([
     getStockWithSource(),
     getChemicalProducts(),
@@ -20,6 +29,7 @@ export default async function StockPage() {
       description="Van inventory, low-stock warnings, mock stock movement, supplier placeholders, and job consumption tracking."
     >
       <StockWorkspace
+        initialSearch={firstParam(params.search)}
         products={products}
         stockRecords={stock}
         usageRecords={usage}

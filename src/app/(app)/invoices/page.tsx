@@ -7,7 +7,16 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function InvoicesPage() {
+type InvoicesPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
+  const params = searchParams ? await searchParams : {};
   const { invoices } = await getInvoicesWithSource();
 
   return (
@@ -15,7 +24,12 @@ export default async function InvoicesPage() {
       title="Invoices"
       description="Invoice creation, due dates, payment status, customer account history, and accounting integration readiness."
     >
-      <InvoicesWorkspace invoices={invoices} />
+      <InvoicesWorkspace
+        initialFilters={{
+          status: firstParam(params.status),
+        }}
+        invoices={invoices}
+      />
     </SectionPage>
   );
 }

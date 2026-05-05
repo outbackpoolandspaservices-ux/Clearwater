@@ -91,7 +91,7 @@ The first working app shell includes:
 - Desktop sidebar navigation.
 - Mobile collapsible menu and bottom navigation.
 - Dashboard, jobs, dispatch, customers, properties/sites, pools, equipment, water testing, chemicals, stock, quotes, invoices, reports, customer portal, and settings pages.
-- Demo dashboard data, quick actions, alerts, and page lists from `src/lib/mock-data.ts`.
+- Dashboard drill-down navigation for jobs, unscheduled work, pending quotes, unpaid invoices, low stock, water chemistry alerts, technician workload, and quick actions.
 - First mock-data business workflow for Customers, Properties/Sites, and Pools, including linked list and detail pages.
 - First mock-data Jobs workflow, including searchable job list, filters, detail pages, workflow timeline, technician actions, and recurring job examples.
 - Mock-data Dispatch Calendar and Technician Today workflows, including route-order placeholders, daily run actions, unscheduled jobs, recurring jobs, and mobile technician job cards.

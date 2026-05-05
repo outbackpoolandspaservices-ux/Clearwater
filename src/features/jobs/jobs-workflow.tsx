@@ -11,6 +11,12 @@ import type { PoolRecord } from "@/features/pools/data/pools";
 import type { SiteRecord } from "@/features/properties/data/sites";
 
 const allValue = "all";
+type JobInitialFilters = {
+  date?: string;
+  scheduled?: string;
+  status?: string;
+  technician?: string;
+};
 type TechnicianRecord = {
   id: string;
   name: string;
@@ -56,8 +62,81 @@ function statusTone(status: string) {
   return "neutral" as const;
 }
 
+function normalise(value: string) {
+  return value.trim().toLowerCase().replaceAll("_", "-").replaceAll(" ", "-");
+}
+
+function isTodayJob(job: JobRecord) {
+  return job.date === "Today" || toIsoDate(job.scheduledDate) === todayIso();
+}
+
+function todayIso() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Darwin",
+  }).format(new Date());
+}
+
+function toIsoDate(value: string) {
+  if (!value || value === "Unscheduled" || value === "Not dated") {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Darwin",
+  }).format(parsed);
+}
+
+function isUnscheduledJob(job: JobRecord) {
+  return (
+    job.date === "Unscheduled" ||
+    job.scheduledDate === "Unscheduled" ||
+    job.scheduledTime === "Unscheduled" ||
+    ["draft", "ready", "ready-to-schedule"].includes(normalise(job.status))
+  );
+}
+
+function resolveStatusFilter(status: string | undefined, jobs: JobRecord[]) {
+  if (!status) return allValue;
+
+  if (["pending", "unscheduled", "all"].includes(normalise(status))) {
+    return allValue;
+  }
+
+  const matchingStatus = unique(jobs.map((job) => job.status)).find(
+    (item) => normalise(item) === normalise(status),
+  );
+
+  return matchingStatus ?? status;
+}
+
+function resolveTechnicianFilter(
+  technician: string | undefined,
+  technicians: TechnicianRecord[],
+) {
+  if (!technician) return allValue;
+
+  const matchingTechnician = technicians.find(
+    (item) =>
+      normalise(item.id) === normalise(technician) ||
+      normalise(item.name) === normalise(technician),
+  );
+
+  return matchingTechnician?.id ?? technician;
+}
+
 export function JobsWorkflow({
   customers,
+  initialFilters,
   jobs,
   pools,
   recurringJobs,
@@ -65,6 +144,7 @@ export function JobsWorkflow({
   technicians,
 }: {
   customers: CustomerRecord[];
+  initialFilters?: JobInitialFilters;
   jobs: JobRecord[];
   pools: PoolRecord[];
   recurringJobs: RecurringJobRecord[];
@@ -72,10 +152,18 @@ export function JobsWorkflow({
   technicians: TechnicianRecord[];
 }) {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState(allValue);
-  const [technician, setTechnician] = useState(allValue);
+  const [status, setStatus] = useState(() =>
+    resolveStatusFilter(initialFilters?.status, jobs),
+  );
+  const [technician, setTechnician] = useState(() =>
+    resolveTechnicianFilter(initialFilters?.technician, technicians),
+  );
   const [jobType, setJobType] = useState(allValue);
   const [priority, setPriority] = useState(allValue);
+  const dateFilter = normalise(initialFilters?.date ?? "");
+  const unscheduledFilter =
+    initialFilters?.scheduled === "false" ||
+    normalise(initialFilters?.status ?? "") === "unscheduled";
 
   const filteredJobs = useMemo(() => {
     const searchText = search.trim().toLowerCase();
@@ -107,10 +195,24 @@ export function JobsWorkflow({
         (status === allValue || job.status === status) &&
         (technician === allValue || job.technicianId === technician) &&
         (jobType === allValue || job.jobType === jobType) &&
-        (priority === allValue || job.priority === priority)
+        (priority === allValue || job.priority === priority) &&
+        (dateFilter !== "today" || isTodayJob(job)) &&
+        (!unscheduledFilter || isUnscheduledJob(job))
       );
     });
-  }, [jobType, jobs, pools, priority, search, sites, status, technician, technicians]);
+  }, [
+    dateFilter,
+    jobType,
+    jobs,
+    pools,
+    priority,
+    search,
+    sites,
+    status,
+    technician,
+    technicians,
+    unscheduledFilter,
+  ]);
 
   const statuses = unique(jobs.map((job) => job.status));
   const jobTypes = unique(jobs.map((job) => job.jobType));
@@ -188,6 +290,12 @@ export function JobsWorkflow({
             Create Job
           </Link>
         </div>
+        {(dateFilter === "today" || unscheduledFilter) ? (
+          <p className="mt-3 rounded-md bg-cyan-50 px-3 py-2 text-sm text-cyan-900">
+            Dashboard filter active:{" "}
+            {dateFilter === "today" ? "today's jobs" : "unscheduled jobs"}.
+          </p>
+        ) : null}
       </section>
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
