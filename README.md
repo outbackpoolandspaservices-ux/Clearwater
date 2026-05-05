@@ -451,6 +451,7 @@ Safety notes:
 - `docs/database-schema.md`: planned PostgreSQL/Drizzle tables and migration path.
 - `docs/authentication-and-permissions.md`: Auth.js and RBAC planning.
 - `docs/data-migration-plan.md`: safe mock-data to database migration plan.
+- `docs/mvp-qa-issue-register.md`: MVP QA checklist and remaining issue register before real business use.
 - `docs/product-strategy-review.md`: MVP product strategy, UX boundaries, and planned/deferred scope.
 - `docs/product-requirements.md`: product goals, users, modules, and scope.
 - `docs/roadmap.md`: phased implementation plan.
