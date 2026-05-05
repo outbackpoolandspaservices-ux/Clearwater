@@ -7,10 +7,14 @@ import {
 } from "@/components/portal/portal-components";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPortalData } from "@/features/portal/portal-data";
-import { getPoolById, getSiteById } from "@/lib/mock-data";
 
-export default function PortalReportsPage() {
-  const { customer, reports, waterTests } = getPortalData();
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export default async function PortalReportsPage() {
+  const { customer, reports, sites, pools, waterTests } = await getPortalData();
 
   return (
     <PortalShell
@@ -23,8 +27,8 @@ export default function PortalReportsPage() {
           {reports.length ? (
             <div className="space-y-4">
               {reports.map((report) => {
-                const site = getSiteById(report.siteId);
-                const pool = getPoolById(report.poolId);
+                const site = sites.find((item) => item.id === report.siteId);
+                const pool = pools.find((item) => item.id === report.poolId);
 
                 return (
                   <div

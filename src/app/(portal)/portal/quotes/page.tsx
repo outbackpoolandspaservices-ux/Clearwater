@@ -7,10 +7,14 @@ import {
 } from "@/components/portal/portal-components";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPortalData } from "@/features/portal/portal-data";
-import { getSiteById } from "@/lib/mock-data";
 
-export default function PortalQuotesPage() {
-  const { customer, quotes } = getPortalData();
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export default async function PortalQuotesPage() {
+  const { customer, quotes, sites } = await getPortalData();
 
   return (
     <PortalShell
@@ -21,7 +25,7 @@ export default function PortalQuotesPage() {
       {quotes.length ? (
         <div className="grid gap-4">
           {quotes.map((quote) => {
-            const site = getSiteById(quote.siteId);
+            const site = sites.find((item) => item.id === quote.siteId);
 
             return (
               <PortalCard key={quote.id} title={quote.title} eyebrow={quote.number}>
@@ -36,7 +40,7 @@ export default function PortalQuotesPage() {
                       </StatusBadge>
                     </div>
                     <p className="text-slate-600">
-                      {site?.address}, {site?.suburb}
+                      {site ? `${site.address}, ${site.suburb}` : quote.siteName}
                     </p>
                     <p className="text-slate-600">
                       Quote date {quote.quoteDate} | Expires {quote.expiryDate}

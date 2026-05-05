@@ -125,13 +125,20 @@ The next database-backed workflow is Quotes and Invoices foundation:
 - Migration: `drizzle/0006_quotes_invoices_workflow.sql` safely expands quote/invoice tables with pool/report/status metadata used by the MVP.
 - Boundary: quote acceptance, conversion to invoice, payment gateway collection, Xero sync, and accounting reconciliation are placeholders for later phases.
 
+The next workflow is Customer Portal database foundation:
+
+- Routes: `/portal`, `/portal/jobs`, `/portal/reports`, `/portal/quotes`, and `/portal/invoices`
+- Scope: portal dashboard, customer jobs, service history, water tests, reports, quotes, invoices, payment history, and placeholder customer actions.
+- Data source: `src/features/portal/portal-data.ts` composes existing database-backed feature data layers and keeps mock fallback through those loaders.
+- Boundary: this is still a demo/customer preview without real portal authentication. Customer login, role enforcement, quote approval, payment collection, message sending, and document download are later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, water test creation, job execution updates, service report creation, BioGuard product seed data, stock creation, job chemical usage, quote creation, and invoice creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, Chemicals, Stock, Job Chemical Usage, Quotes, and Invoices now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, job execution updates, service report creation, BioGuard product seed data, stock creation, job chemical usage, quote creation, and invoice creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, Chemicals, Stock, Job Chemical Usage, Quotes, Invoices, and Customer Portal now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 

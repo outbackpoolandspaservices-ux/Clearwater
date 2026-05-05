@@ -8,8 +8,13 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPortalData } from "@/features/portal/portal-data";
 
-export default function PortalJobsPage() {
-  const { customer, jobs, sites, pools } = getPortalData();
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export default async function PortalJobsPage() {
+  const { customer, jobs, sites, pools } = await getPortalData();
 
   return (
     <PortalShell

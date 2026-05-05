@@ -7,10 +7,14 @@ import {
 } from "@/components/portal/portal-components";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPortalData } from "@/features/portal/portal-data";
-import { getPaymentsForInvoice, getSiteById } from "@/lib/mock-data";
 
-export default function PortalInvoicesPage() {
-  const { customer, invoices } = getPortalData();
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export default async function PortalInvoicesPage() {
+  const { customer, invoices, payments, sites } = await getPortalData();
 
   return (
     <PortalShell
@@ -21,8 +25,10 @@ export default function PortalInvoicesPage() {
       {invoices.length ? (
         <div className="grid gap-4">
           {invoices.map((invoice) => {
-            const site = getSiteById(invoice.siteId);
-            const payments = getPaymentsForInvoice(invoice.id);
+            const site = sites.find((item) => item.id === invoice.siteId);
+            const invoicePayments = payments.filter(
+              (payment) => payment.invoiceId === invoice.id,
+            );
 
             return (
               <PortalCard
@@ -38,7 +44,7 @@ export default function PortalInvoicesPage() {
                 <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
                   <div className="space-y-3 text-sm">
                     <p className="font-semibold text-slate-950">
-                      {site?.address}, {site?.suburb}
+                      {site ? `${site.address}, ${site.suburb}` : invoice.siteName}
                     </p>
                     <p className="text-slate-600">
                       Invoice date {invoice.invoiceDate} | Due {invoice.dueDate}
@@ -63,9 +69,9 @@ export default function PortalInvoicesPage() {
                     </div>
                     <div className="rounded bg-slate-50 p-3">
                       <p className="font-bold text-slate-950">Payment history</p>
-                      {payments.length ? (
+                      {invoicePayments.length ? (
                         <div className="mt-2 space-y-2">
-                          {payments.map((payment) => (
+                          {invoicePayments.map((payment) => (
                             <p
                               key={payment.id}
                               className="flex justify-between gap-3 text-slate-600"

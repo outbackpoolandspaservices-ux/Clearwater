@@ -116,6 +116,7 @@ The first working app shell includes:
 - Stock and Van Inventory database foundation is included in `drizzle/0004_stock_van_inventory.sql`. `/stock` reads van stock from PostgreSQL when available with mock fallback, `/stock/new` creates stock records and an initial stock movement, and seed data safely loads starter van stock for service technicians. Stock adjustment, transfer, used-on-job, write-off, supplier ordering, accounting, and automatic stock deduction remain later phases.
 - Job Chemical Usage foundation is included in `drizzle/0005_job_chemical_usage.sql`. Job execution can record product usage from the chemical catalogue, optionally deduct matching van stock, write stock movement records, and show usage on job details and service report previews. Exact dosing automation and invoice preparation remain later phases.
 - Quotes and Invoices database workflow is included in `drizzle/0006_quotes_invoices_workflow.sql`. `/quotes`, `/quotes/new`, `/quotes/[quoteId]`, `/invoices`, `/invoices/new`, and `/invoices/[invoiceId]` now read/write PostgreSQL where available with mock fallback. Xero sync, payment gateway collection, quote approval, and conversion actions remain placeholders.
+- Customer Portal database workflow now reads from the same PostgreSQL-backed Customers, Properties/Sites, Pools, Jobs, Water Testing, Reports, Quotes, Invoices, and Payments data layers with mock fallback. It remains a safe demo portal without real authentication until the auth phase.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -289,6 +290,13 @@ Database-backed Quotes and Invoices workflow:
 - Invoice payment statuses currently track Unpaid, Part paid, Paid, and Overdue style labels while real payment collection remains a placeholder.
 - `/api/admin/database/quotes/count` and `/api/admin/database/invoices/count` provide protected safe count checks using `CLEARWATER_SETUP_KEY`.
 - Xero sync and payment gateway integration remain planning cards/placeholders only.
+
+Customer Portal database workflow:
+
+- Open `/portal`, `/portal/jobs`, `/portal/reports`, `/portal/quotes`, and `/portal/invoices`.
+- The portal uses the first available database customer when the original mock portal customer is not present, then filters linked sites, pools, jobs, water tests, reports, quotes, invoices, and payments for that customer.
+- Placeholder customer actions remain: request service, send message, approve/decline quote, pay invoice, and download PDF.
+- Real customer login, portal permissions, quote approval, payment processing, and message sending are later phases.
 
 Database-backed Water Testing workflow:
 

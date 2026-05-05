@@ -9,7 +9,12 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getPortalData } from "@/features/portal/portal-data";
 
-export default function PortalPage() {
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
+export default async function PortalPage() {
   const {
     customer,
     sites,
@@ -20,7 +25,7 @@ export default function PortalPage() {
     reports,
     quotesAwaitingApproval,
     unpaidInvoices,
-  } = getPortalData();
+  } = await getPortalData();
   const nextJob = upcomingJobs[0];
   const latestWaterTest = waterTests[0];
 

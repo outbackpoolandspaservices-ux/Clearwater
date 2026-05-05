@@ -15,6 +15,7 @@ export type PaymentRecord = {
   amount: string;
   date: string;
   id: string;
+  invoiceId: string;
   method: string;
   reference: string;
   status: string;
@@ -82,6 +83,7 @@ type DatabaseLineItemRow = {
 type DatabasePaymentRow = {
   amount_cents?: number | null;
   id: string;
+  invoice_id?: string | null;
   method?: string | null;
   provider_reference?: string | null;
   received_at?: Date | string | null;
@@ -211,7 +213,7 @@ async function getPaymentsFromDatabase(
   if (!(await tableExists(client, "payments"))) return [];
 
   const rows = await client<DatabasePaymentRow[]>`
-    select id, amount_cents, status, method, provider_reference, received_at
+    select id, invoice_id, amount_cents, status, method, provider_reference, received_at
     from payments
     where invoice_id = ${invoiceId}
     order by received_at desc nulls last, id desc
@@ -221,6 +223,7 @@ async function getPaymentsFromDatabase(
     amount: money(payment.amount_cents),
     date: formatDate(payment.received_at),
     id: payment.id,
+    invoiceId: payment.invoice_id ?? invoiceId,
     method: payment.method ?? "Payment method placeholder",
     reference: payment.provider_reference ?? "",
     status: statusLabel(payment.status),
