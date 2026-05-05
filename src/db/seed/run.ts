@@ -5,6 +5,7 @@ import { vanStock } from "@/lib/mock-data";
 
 import { customerSeeds } from "./customers";
 import { equipmentSeeds } from "./equipment";
+import { seedIds } from "./ids";
 import { organisationSeed } from "./organisation";
 import { poolSeeds } from "./pools";
 import { siteSeeds } from "./sites";
@@ -264,9 +265,22 @@ function normaliseStockProductId(productId: string) {
   return aliases[productId] ?? productId;
 }
 
+function normaliseStockId(stockId: string) {
+  const ids: Record<string, string> = {
+    "stock-jordan-burnout": seedIds.stock.jordanBurnout,
+    "stock-jordan-phos": seedIds.stock.jordanPhos,
+    "stock-sam-cal": seedIds.stock.samCal,
+    "stock-sam-salt": seedIds.stock.samSalt,
+    "stock-taylor-lo-n-slo": seedIds.stock.taylorLoNSlo,
+    "stock-taylor-stain-scale": seedIds.stock.taylorStainScale,
+  };
+
+  return ids[stockId] ?? stockId;
+}
+
 function stockRows(): SeedRow[] {
   return vanStock.map((stock) => ({
-    id: stock.id,
+    id: normaliseStockId(stock.id),
     organisation_id: organisationSeed.id,
     product_id: normaliseStockProductId(stock.productId),
     van_user_id: stock.technicianId,
