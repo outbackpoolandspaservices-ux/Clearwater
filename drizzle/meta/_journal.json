@@ -29,6 +29,13 @@
       "when": 1777924800000,
       "tag": "0003_bioguard_product_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777925700000,
+      "tag": "0004_stock_van_inventory",
+      "breakpoints": true
     }
   ]
 }

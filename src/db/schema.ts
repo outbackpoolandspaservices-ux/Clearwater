@@ -184,6 +184,7 @@ export const stockMovementType = pgEnum("stock_movement_type", [
   "job_usage",
   "reorder",
   "receive",
+  "write_off",
 ]);
 
 export const organisations = pgTable("organisations", {
@@ -528,7 +529,7 @@ export const stock = pgTable("stock", {
   organisationId: uuid("organisation_id")
     .notNull()
     .references(() => organisations.id),
-  productId: uuid("product_id")
+  productId: text("product_id")
     .notNull()
     .references(() => chemicalProducts.id),
   vanUserId: text("van_user_id").references(() => users.id),
@@ -539,6 +540,9 @@ export const stock = pgTable("stock", {
   sellingPriceCents: integer("selling_price_cents"),
   lowStockThreshold: real("low_stock_threshold").notNull().default(0),
   supplier: text("supplier"),
+  status: text("status").notNull().default("Active"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const stockMovements = pgTable("stock_movements", {
@@ -549,7 +553,7 @@ export const stockMovements = pgTable("stock_movements", {
   stockId: uuid("stock_id")
     .notNull()
     .references(() => stock.id),
-  productId: uuid("product_id")
+  productId: text("product_id")
     .notNull()
     .references(() => chemicalProducts.id),
   jobId: uuid("job_id").references(() => jobs.id),

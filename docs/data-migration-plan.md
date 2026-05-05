@@ -97,13 +97,23 @@ The next workflow is Chemical Recommendations foundation:
 - Database target: current `jobs` note columns only.
 - Safety: no exact dosing calculation, no stock deduction, and no automatic customer-facing advice.
 
+The next database-backed workflow is Stock and Van Inventory foundation:
+
+- Routes: `/stock` and `/stock/new`
+- Scope: van/product stock register, technician/van assignment, quantity on hand, units, unit cost, selling price, low-stock threshold, supplier, status, and initial movement note.
+- Data source: `src/features/stock/data/stock.ts` reads PostgreSQL from `stock` when available and falls back to mock van stock.
+- Save path: server action in `src/features/stock/actions.ts`
+- Migration: `drizzle/0004_stock_van_inventory.sql` safely creates or expands `stock` and `stock_movements`.
+- Seed: starter van stock records seed idempotently from the existing ClearWater mock stock examples.
+- Boundary: movement tables are prepared for add, adjust, used on job, transfer, reorder, and write-off workflows. Automatic stock deduction, job chemical usage records, supplier ordering, accounting, Xero, and payment integration remain later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, water test creation, job execution updates, service report creation, and BioGuard product seed data can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, and Chemicals now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, job execution updates, service report creation, BioGuard product seed data, and stock creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, Chemicals, and Stock now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -125,6 +135,7 @@ The data functions are async and are structured so future work can replace the d
 - `getReportById()`
 - `getChemicalProducts()`
 - `getChemicalProductById()`
+- `getStockWithSource()`
 
 ## Future Steps
 

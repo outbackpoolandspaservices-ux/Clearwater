@@ -113,6 +113,7 @@ The first working app shell includes:
 - Reports database support is included in `drizzle/0002_add_reports_table.sql`. This migration safely creates the `reports` table and report enums when missing, with service-report fields for customer summary, work completed, follow-up, next service recommendation, internal notes, metadata, sent status, and timestamps.
 - BioGuard Product Intelligence foundation is included in `drizzle/0003_bioguard_product_intelligence.sql`. `/chemicals` and `/chemicals/[chemicalId]` now read BioGuard/Dryden Aqua product records from PostgreSQL when available with mock fallback. Seed data includes core BioGuard categories such as sanitisers, oxidisers, algaecides, balancers, specialty, salt pools, Mineral Springs, spa/commercial planning categories, and AFM filter media. Recommendations remain technician-reviewed guidance only; exact dosing automation comes later.
 - Chemical Recommendation foundation now appears on water test detail pages. It suggests product categories and possible BioGuard products from simple reading conditions, marks every suggestion as technician review-required, and can add selected products to linked job notes without dosing automation or stock deduction.
+- Stock and Van Inventory database foundation is included in `drizzle/0004_stock_van_inventory.sql`. `/stock` reads van stock from PostgreSQL when available with mock fallback, `/stock/new` creates stock records and an initial stock movement, and seed data safely loads starter van stock for service technicians. Stock adjustment, transfer, used-on-job, write-off, supplier ordering, accounting, and automatic stock deduction remain later phases.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -256,6 +257,16 @@ Chemical Recommendation foundation:
 - Simple rules suggest review-required product categories for low chlorine, high combined chlorine, pH, alkalinity, calcium hardness, high CYA, phosphate, algae notes, and salt pool scale risk.
 - Recommendations show possible BioGuard products from the product intelligence catalogue.
 - Linked jobs can receive selected products as technician notes. This does not calculate doses, deduct stock, or create customer-facing advice automatically.
+
+Database-backed Stock and Van Inventory workflow:
+
+- Open `/stock` to review van inventory.
+- Open `/stock/new` to add a product stock record to a technician van or service location.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- `/stock` attempts PostgreSQL reads from the `stock` table when a database URL is configured and falls back to mock stock records if the database is unavailable.
+- The protected setup route and `npm run db:seed` can seed starter BioGuard van stock idempotently.
+- `/api/admin/database/stock/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+- Stock movements are prepared for received, adjustment, transfer, used-on-job, reorder, and write-off workflows. Job stock deduction and accounting integration are later phases.
 
 Database-backed Water Testing workflow:
 

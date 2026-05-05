@@ -1,6 +1,7 @@
 import type postgres from "postgres";
 
 import { bioGuardProductSeeds } from "@/features/chemicals/data/bioguard-products";
+import { vanStock } from "@/lib/mock-data";
 
 import { customerSeeds } from "./customers";
 import { equipmentSeeds } from "./equipment";
@@ -247,6 +248,39 @@ function chemicalProductRows(): SeedRow[] {
   }));
 }
 
+function parseCurrencyToCents(value: string) {
+  const parsed = Number(value.replace(/[^0-9.]/g, ""));
+
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+}
+
+function normaliseStockProductId(productId: string) {
+  const aliases: Record<string, string> = {
+    "cal-chlor-hypo": "cal-chlor-clc-700",
+    "salt-pool-protector": "salt-pool-protector-ii",
+    "stain-scale-remover": "salt-pool-stain-scale-control",
+  };
+
+  return aliases[productId] ?? productId;
+}
+
+function stockRows(): SeedRow[] {
+  return vanStock.map((stock) => ({
+    id: stock.id,
+    organisation_id: organisationSeed.id,
+    product_id: normaliseStockProductId(stock.productId),
+    van_user_id: stock.technicianId,
+    location_name: stock.vanName,
+    quantity_on_hand: stock.quantityOnHand,
+    unit: stock.unit,
+    unit_cost_cents: parseCurrencyToCents(stock.unitCost),
+    selling_price_cents: parseCurrencyToCents(stock.sellingPrice),
+    low_stock_threshold: stock.lowStockThreshold,
+    supplier: stock.supplier,
+    status: stock.stockStatus,
+  }));
+}
+
 export async function seedInitialClearWaterData(client: postgres.Sql) {
   await upsertSeedRows(client, "organisations", organisationRows());
   await upsertSeedRows(client, "users", userRows());
@@ -262,4 +296,5 @@ export async function seedInitialClearWaterData(client: postgres.Sql) {
   await upsertSeedRows(client, "pools", poolRows());
   await upsertSeedRows(client, "equipment", equipmentRows());
   await upsertSeedRows(client, "chemical_products", chemicalProductRows());
+  await upsertSeedRows(client, "stock", stockRows());
 }

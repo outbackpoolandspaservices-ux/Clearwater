@@ -5,15 +5,13 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import type { ChemicalProductRecord } from "@/features/chemicals/data/chemicals";
+import type { StockRecord, StockUsageRecord } from "@/features/stock/data/stock";
 import {
-  bioGuardProducts,
-  getBioGuardProductById,
   getCustomerById,
   getJobById,
   getTechnicianById,
-  stockUsage,
   technicians,
-  vanStock,
 } from "@/lib/mock-data";
 
 const allValue = "all";
@@ -28,15 +26,23 @@ function stockTone(status: string) {
   return "success" as const;
 }
 
-export function StockWorkspace() {
+export function StockWorkspace({
+  products,
+  stockRecords,
+  usageRecords,
+}: {
+  products: ChemicalProductRecord[];
+  stockRecords: StockRecord[];
+  usageRecords: StockUsageRecord[];
+}) {
   const [technician, setTechnician] = useState(allValue);
   const [category, setCategory] = useState(allValue);
   const [lowStock, setLowStock] = useState(allValue);
   const [brand, setBrand] = useState(allValue);
 
   const filteredStock = useMemo(() => {
-    return vanStock.filter((stock) => {
-      const product = getBioGuardProductById(stock.productId);
+    return stockRecords.filter((stock) => {
+      const product = products.find((item) => item.id === stock.productId);
       const isLow = stock.stockStatus === "Low stock";
 
       return (
@@ -47,7 +53,7 @@ export function StockWorkspace() {
         (brand === allValue || product?.brand === brand)
       );
     });
-  }, [brand, category, lowStock, technician]);
+  }, [brand, category, lowStock, products, stockRecords, technician]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +77,7 @@ export function StockWorkspace() {
             value={category}
           >
             <option value={allValue}>All categories</option>
-            {unique(bioGuardProducts.map((product) => product.category)).map(
+            {unique(products.map((product) => product.category)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}
@@ -94,7 +100,7 @@ export function StockWorkspace() {
             value={brand}
           >
             <option value={allValue}>All brands</option>
-            {unique(bioGuardProducts.map((product) => product.brand)).map(
+            {unique(products.map((product) => product.brand)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}
@@ -102,8 +108,13 @@ export function StockWorkspace() {
               ),
             )}
           </select>
-          {["Add Stock", "Adjust Stock", "Transfer Stock", "Reorder"].map(
-            (action) => (
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-3 text-sm font-semibold text-white hover:bg-cyan-700"
+            href="/stock/new"
+          >
+            Add Stock
+          </Link>
+          {["Adjust Stock", "Transfer Stock", "Reorder"].map((action) => (
               <button
                 className="min-h-10 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
                 key={action}
@@ -111,8 +122,7 @@ export function StockWorkspace() {
               >
                 {action}
               </button>
-            ),
-          )}
+          ))}
         </div>
       </section>
 
@@ -122,8 +132,8 @@ export function StockWorkspace() {
             Van inventory
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Mock vehicle stock only. Supplier ordering and transfers are
-            placeholders.
+            Van stock reads from PostgreSQL when available, with mock fallback.
+            Supplier ordering and transfer actions are placeholders.
           </p>
         </div>
         {filteredStock.length > 0 ? (
@@ -144,7 +154,7 @@ export function StockWorkspace() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredStock.map((stock) => {
-                  const product = getBioGuardProductById(stock.productId);
+                  const product = products.find((item) => item.id === stock.productId);
                   const linkedTechnician = getTechnicianById(stock.technicianId);
 
                   return (
@@ -208,7 +218,8 @@ export function StockWorkspace() {
             Recent chemical usage
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Mock job usage for stock reduction and profitability planning.
+            Job usage examples remain planning data until job chemical usage is
+            connected in the next phase.
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -225,10 +236,10 @@ export function StockWorkspace() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {stockUsage.map((usage) => {
+              {usageRecords.map((usage) => {
                 const job = getJobById(usage.jobId);
                 const customer = job ? getCustomerById(job.customerId) : undefined;
-                const product = getBioGuardProductById(usage.productId);
+                const product = products.find((item) => item.id === usage.productId);
 
                 return (
                   <tr className="hover:bg-slate-50" key={usage.id}>
