@@ -115,6 +115,7 @@ The first working app shell includes:
 - Chemical Recommendation foundation now appears on water test detail pages. It suggests product categories and possible BioGuard products from simple reading conditions, marks every suggestion as technician review-required, and can add selected products to linked job notes without dosing automation or stock deduction.
 - Stock and Van Inventory database foundation is included in `drizzle/0004_stock_van_inventory.sql`. `/stock` reads van stock from PostgreSQL when available with mock fallback, `/stock/new` creates stock records and an initial stock movement, and seed data safely loads starter van stock for service technicians. Stock adjustment, transfer, used-on-job, write-off, supplier ordering, accounting, and automatic stock deduction remain later phases.
 - Job Chemical Usage foundation is included in `drizzle/0005_job_chemical_usage.sql`. Job execution can record product usage from the chemical catalogue, optionally deduct matching van stock, write stock movement records, and show usage on job details and service report previews. Exact dosing automation and invoice preparation remain later phases.
+- Quotes and Invoices database workflow is included in `drizzle/0006_quotes_invoices_workflow.sql`. `/quotes`, `/quotes/new`, `/quotes/[quoteId]`, `/invoices`, `/invoices/new`, and `/invoices/[invoiceId]` now read/write PostgreSQL where available with mock fallback. Xero sync, payment gateway collection, quote approval, and conversion actions remain placeholders.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -278,6 +279,16 @@ Job Chemical Usage and Stock Deduction foundation:
 - `/jobs/[jobId]` and `/reports/[reportId]` show linked chemical usage with mock fallback.
 - `/api/admin/database/job-chemical-usage/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 - Stock deduction is a foundation only. Exact BioGuard dosing, invoice line item preparation, supplier reordering, and accounting integration are later phases.
+
+Database-backed Quotes and Invoices workflow:
+
+- Open `/quotes` and `/invoices` to review database-backed registers with mock fallback.
+- Use `/quotes/new` and `/invoices/new` to create draft records with a first line item.
+- Quote line items and invoice line items support labour, parts, chemicals, callout, equipment, and other categories.
+- Quote statuses include Draft, Sent, Accepted, Declined, Expired, and Converted to invoice.
+- Invoice payment statuses currently track Unpaid, Part paid, Paid, and Overdue style labels while real payment collection remains a placeholder.
+- `/api/admin/database/quotes/count` and `/api/admin/database/invoices/count` provide protected safe count checks using `CLEARWATER_SETUP_KEY`.
+- Xero sync and payment gateway integration remain planning cards/placeholders only.
 
 Database-backed Water Testing workflow:
 

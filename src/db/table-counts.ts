@@ -15,6 +15,11 @@ export const setupCountTables = [
   "stock",
   "stock_movements",
   "job_chemical_usage",
+  "quotes",
+  "quote_line_items",
+  "invoices",
+  "invoice_line_items",
+  "payments",
 ] as const;
 
 export type SetupTableCountValue = number | "missing";

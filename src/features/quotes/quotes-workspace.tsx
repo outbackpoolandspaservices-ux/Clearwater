@@ -5,12 +5,7 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  getCustomerById,
-  getJobById,
-  getSiteById,
-  quotes,
-} from "@/lib/mock-data";
+import type { QuoteRecord } from "@/features/quotes/data/quotes";
 
 const allValue = "all";
 
@@ -24,7 +19,7 @@ function statusTone(status: string) {
   return "neutral" as const;
 }
 
-export function QuotesWorkspace() {
+export function QuotesWorkspace({ quotes }: { quotes: QuoteRecord[] }) {
   const [status, setStatus] = useState(allValue);
   const [customer, setCustomer] = useState(allValue);
   const [date, setDate] = useState("");
@@ -37,7 +32,7 @@ export function QuotesWorkspace() {
         (!date || quote.quoteDate === date)
       );
     });
-  }, [customer, date, status]);
+  }, [customer, date, quotes, status]);
 
   const customerIds = unique(quotes.map((quote) => quote.customerId));
 
@@ -65,7 +60,8 @@ export function QuotesWorkspace() {
             <option value={allValue}>All customers</option>
             {customerIds.map((id) => (
               <option key={id} value={id}>
-                {getCustomerById(id)?.name ?? id}
+                {quotes.find((quote) => quote.customerId === id)?.customerName ||
+                  id}
               </option>
             ))}
           </select>
@@ -75,17 +71,21 @@ export function QuotesWorkspace() {
             type="date"
             value={date}
           />
-          {["Create Quote", "Send Quote", "Convert to Job", "Convert to Invoice"].map(
-            (action) => (
-              <button
-                className="min-h-10 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-                key={action}
-                type="button"
-              >
-                {action}
-              </button>
-            ),
-          )}
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-3 text-sm font-semibold text-white hover:bg-cyan-700"
+            href="/quotes/new"
+          >
+            Create Quote
+          </Link>
+          {["Send Quote", "Convert to Job", "Convert to Invoice"].map((action) => (
+            <button
+              className="min-h-10 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
+              key={action}
+              type="button"
+            >
+              {action} Placeholder
+            </button>
+          ))}
         </div>
       </section>
 
@@ -95,7 +95,8 @@ export function QuotesWorkspace() {
             Quote register
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Mock quotes only. Sending and conversion actions are placeholders.
+            Quotes read from PostgreSQL when available with mock fallback.
+            Sending and conversion actions are placeholders.
           </p>
         </div>
         {filteredQuotes.length > 0 ? (
@@ -116,10 +117,6 @@ export function QuotesWorkspace() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredQuotes.map((quote) => {
-                  const linkedCustomer = getCustomerById(quote.customerId);
-                  const site = getSiteById(quote.siteId);
-                  const job = getJobById(quote.jobId);
-
                   return (
                     <tr className="hover:bg-slate-50" key={quote.id}>
                       <td className="px-5 py-4">
@@ -134,11 +131,13 @@ export function QuotesWorkspace() {
                         </p>
                       </td>
                       <td className="px-5 py-4 text-slate-600">
-                        {linkedCustomer?.name}
+                        {quote.customerName || quote.customerId}
                       </td>
-                      <td className="px-5 py-4 text-slate-600">{site?.name}</td>
                       <td className="px-5 py-4 text-slate-600">
-                        {job?.jobNumber}
+                        {quote.siteName || quote.siteId}
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {quote.jobNumber || quote.jobId || "No job linked"}
                       </td>
                       <td className="px-5 py-4 text-slate-600">
                         {quote.quoteDate}

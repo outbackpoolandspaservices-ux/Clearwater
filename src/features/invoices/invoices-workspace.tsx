@@ -5,12 +5,7 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  getCustomerById,
-  getJobById,
-  getSiteById,
-  invoices,
-} from "@/lib/mock-data";
+import type { InvoiceRecord } from "@/features/invoices/data/invoices";
 
 const allValue = "all";
 
@@ -32,7 +27,7 @@ function xeroTone(status: string) {
   return "neutral" as const;
 }
 
-export function InvoicesWorkspace() {
+export function InvoicesWorkspace({ invoices }: { invoices: InvoiceRecord[] }) {
   const [paymentStatus, setPaymentStatus] = useState(allValue);
   const [xeroStatus, setXeroStatus] = useState(allValue);
   const [customer, setCustomer] = useState(allValue);
@@ -48,7 +43,7 @@ export function InvoicesWorkspace() {
         (!date || invoice.invoiceDate === date)
       );
     });
-  }, [customer, date, paymentStatus, xeroStatus]);
+  }, [customer, date, invoices, paymentStatus, xeroStatus]);
 
   const customerIds = unique(invoices.map((invoice) => invoice.customerId));
 
@@ -92,7 +87,8 @@ export function InvoicesWorkspace() {
             <option value={allValue}>All customers</option>
             {customerIds.map((id) => (
               <option key={id} value={id}>
-                {getCustomerById(id)?.name ?? id}
+                {invoices.find((invoice) => invoice.customerId === id)
+                  ?.customerName || id}
               </option>
             ))}
           </select>
@@ -102,17 +98,21 @@ export function InvoicesWorkspace() {
             type="date"
             value={date}
           />
-          {["Create Invoice", "Send Invoice", "Add Payment", "Sync with Xero"].map(
-            (action) => (
-              <button
-                className="min-h-10 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
-                key={action}
-                type="button"
-              >
-                {action}
-              </button>
-            ),
-          )}
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-cyan-600 px-3 text-sm font-semibold text-white hover:bg-cyan-700"
+            href="/invoices/new"
+          >
+            Create Invoice
+          </Link>
+          {["Send Invoice", "Add Payment", "Sync with Xero"].map((action) => (
+            <button
+              className="min-h-10 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:border-cyan-300 hover:bg-cyan-50"
+              key={action}
+              type="button"
+            >
+              {action} Placeholder
+            </button>
+          ))}
         </div>
       </section>
 
@@ -122,7 +122,8 @@ export function InvoicesWorkspace() {
             Invoice register
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Mock invoices only. Xero and payment gateway integration are placeholders.
+            Invoices read from PostgreSQL when available with mock fallback.
+            Xero and payment gateway integration are placeholders.
           </p>
         </div>
         {filteredInvoices.length > 0 ? (
@@ -143,10 +144,6 @@ export function InvoicesWorkspace() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredInvoices.map((invoice) => {
-                  const linkedCustomer = getCustomerById(invoice.customerId);
-                  const site = getSiteById(invoice.siteId);
-                  const job = getJobById(invoice.jobId);
-
                   return (
                     <tr className="hover:bg-slate-50" key={invoice.id}>
                       <td className="px-5 py-4">
@@ -158,11 +155,13 @@ export function InvoicesWorkspace() {
                         </Link>
                       </td>
                       <td className="px-5 py-4 text-slate-600">
-                        {linkedCustomer?.name}
+                        {invoice.customerName || invoice.customerId}
                       </td>
-                      <td className="px-5 py-4 text-slate-600">{site?.name}</td>
                       <td className="px-5 py-4 text-slate-600">
-                        {job?.jobNumber}
+                        {invoice.siteName || invoice.siteId}
+                      </td>
+                      <td className="px-5 py-4 text-slate-600">
+                        {invoice.jobNumber || invoice.jobId || "No job linked"}
                       </td>
                       <td className="px-5 py-4 text-slate-600">
                         {invoice.invoiceDate}

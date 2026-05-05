@@ -591,10 +591,13 @@ export const quotes = pgTable("quotes", {
     .notNull()
     .references(() => customers.id),
   siteId: uuid("site_id").references(() => sites.id),
+  poolId: uuid("pool_id").references(() => pools.id),
   jobId: uuid("job_id").references(() => jobs.id),
+  reportId: uuid("report_id").references(() => reports.id),
   quoteNumber: text("quote_number").notNull().unique(),
   title: text("title").notNull(),
   status: quoteStatus("status").notNull().default("draft"),
+  approvalStatus: text("approval_status").notNull().default("Not sent"),
   subtotalCents: integer("subtotal_cents").notNull().default(0),
   gstCents: integer("gst_cents").notNull().default(0),
   totalCents: integer("total_cents").notNull().default(0),
@@ -602,6 +605,8 @@ export const quotes = pgTable("quotes", {
   validUntil: date("valid_until"),
   acceptedAt: timestamp("accepted_at", { mode: "date" }),
   terms: text("terms"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const quoteLineItems = pgTable("quote_line_items", {
@@ -625,16 +630,21 @@ export const invoices = pgTable("invoices", {
     .notNull()
     .references(() => customers.id),
   siteId: uuid("site_id").references(() => sites.id),
+  poolId: uuid("pool_id").references(() => pools.id),
   jobId: uuid("job_id").references(() => jobs.id),
   quoteId: uuid("quote_id").references(() => quotes.id),
+  reportId: uuid("report_id").references(() => reports.id),
   invoiceNumber: text("invoice_number").notNull().unique(),
   status: invoiceStatus("status").notNull().default("draft"),
+  paymentStatus: text("payment_status").notNull().default("Unpaid"),
   subtotalCents: integer("subtotal_cents").notNull().default(0),
   gstCents: integer("gst_cents").notNull().default(0),
   totalCents: integer("total_cents").notNull().default(0),
   issuedAt: timestamp("issued_at", { mode: "date" }),
   dueAt: timestamp("due_at", { mode: "date" }),
   xeroSyncStatus: text("xero_sync_status").notNull().default("not_synced"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const invoiceLineItems = pgTable("invoice_line_items", {

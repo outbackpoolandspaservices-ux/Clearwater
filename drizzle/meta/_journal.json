@@ -43,6 +43,13 @@
       "when": 1777926600000,
       "tag": "0005_job_chemical_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777927500000,
+      "tag": "0006_quotes_invoices_workflow",
+      "breakpoints": true
     }
   ]
 }

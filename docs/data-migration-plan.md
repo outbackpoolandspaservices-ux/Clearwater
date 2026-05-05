@@ -116,13 +116,22 @@ The next database-backed workflow is Job Chemical Usage and Stock Deduction foun
 - Migration: `drizzle/0005_job_chemical_usage.sql` safely creates or expands `job_chemical_usage`.
 - Boundary: quantity deduction is direct and does not do unit conversion. Exact BioGuard dosing automation, invoice preparation, supplier ordering, Xero, payments, and AI remain later phases.
 
+The next database-backed workflow is Quotes and Invoices foundation:
+
+- Routes: `/quotes`, `/quotes/new`, `/quotes/[quoteId]`, `/invoices`, `/invoices/new`, and `/invoices/[invoiceId]`
+- Scope: quote/invoice registers, detail pages, draft quote creation, draft invoice creation, first line item creation, linked customer/site/pool/job fields, payment status placeholders, and Xero planning cards.
+- Data sources: `src/features/quotes/data/quotes.ts` and `src/features/invoices/data/invoices.ts` read PostgreSQL where available and fall back to mock data.
+- Save paths: server actions in `src/features/quotes/actions.ts` and `src/features/invoices/actions.ts`
+- Migration: `drizzle/0006_quotes_invoices_workflow.sql` safely expands quote/invoice tables with pool/report/status metadata used by the MVP.
+- Boundary: quote acceptance, conversion to invoice, payment gateway collection, Xero sync, and accounting reconciliation are placeholders for later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, water test creation, job execution updates, service report creation, BioGuard product seed data, stock creation, and job chemical usage can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, Chemicals, Stock, and Job Chemical Usage now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, job execution updates, service report creation, BioGuard product seed data, stock creation, job chemical usage, quote creation, and invoice creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, Chemicals, Stock, Job Chemical Usage, Quotes, and Invoices now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -146,6 +155,10 @@ The data functions are async and are structured so future work can replace the d
 - `getChemicalProductById()`
 - `getStockWithSource()`
 - `getJobChemicalUsage()`
+- `getQuotesWithSource()`
+- `getQuoteById()`
+- `getInvoicesWithSource()`
+- `getInvoiceById()`
 
 ## Future Steps
 

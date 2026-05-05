@@ -4,14 +4,12 @@ import { notFound } from "next/navigation";
 import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  getCustomerById,
-  getJobById,
-  getPoolById,
-  getQuoteById,
-  getReportById,
-  getSiteById,
-} from "@/lib/mock-data";
+import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobById } from "@/features/jobs/data/jobs";
+import { getPoolById } from "@/features/pools/data/pools";
+import { getSiteById } from "@/features/properties/data/sites";
+import { getQuoteById } from "@/features/quotes/data/quotes";
+import { getReportById } from "@/features/reports/data/reports";
 
 type QuoteDetailPageProps = {
   params: Promise<{
@@ -20,29 +18,36 @@ type QuoteDetailPageProps = {
 };
 
 function statusTone(status: string) {
-  if (status === "Approved") return "success" as const;
+  if (status === "Approved" || status === "Accepted") return "success" as const;
   if (status === "Sent") return "warning" as const;
   return "neutral" as const;
 }
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) {
   const { quoteId } = await params;
-  const quote = getQuoteById(quoteId);
+  const quote = await getQuoteById(quoteId);
 
   if (!quote) {
     notFound();
   }
 
-  const customer = getCustomerById(quote.customerId);
-  const site = getSiteById(quote.siteId);
-  const pool = getPoolById(quote.poolId);
-  const job = getJobById(quote.jobId);
-  const report = quote.reportId ? getReportById(quote.reportId) : undefined;
+  const [customer, site, pool, job, report] = await Promise.all([
+    quote.customerId ? getCustomerById(quote.customerId) : Promise.resolve(undefined),
+    quote.siteId ? getSiteById(quote.siteId) : Promise.resolve(undefined),
+    quote.poolId ? getPoolById(quote.poolId) : Promise.resolve(undefined),
+    quote.jobId ? getJobById(quote.jobId) : Promise.resolve(undefined),
+    quote.reportId ? getReportById(quote.reportId) : Promise.resolve(undefined),
+  ]);
 
   return (
     <SectionPage
       title={`${quote.number}: ${quote.title}`}
-      description="Mock quote preview with line items, approval placeholders, and conversion planning."
+      description="Quote preview with line items, approval placeholders, and conversion planning."
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={statusTone(quote.status)}>{quote.status}</StatusBadge>

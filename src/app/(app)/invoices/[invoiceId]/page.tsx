@@ -5,17 +5,19 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
+import { getCustomerById } from "@/features/customers/data/customers";
 import {
-  getCustomerById,
-  getBioGuardProductById,
   getInvoiceById,
-  getJobProfitabilityByJobId,
-  getJobById,
   getPaymentsForInvoice,
-  getPoolById,
-  getReportById,
-  getSiteById,
-  getStockUsageForInvoice,
+} from "@/features/invoices/data/invoices";
+import { getJobChemicalUsage } from "@/features/jobs/data/chemical-usage";
+import { getJobById } from "@/features/jobs/data/jobs";
+import { getPoolById } from "@/features/pools/data/pools";
+import { getSiteById } from "@/features/properties/data/sites";
+import { getReportById } from "@/features/reports/data/reports";
+import {
+  getJobProfitabilityByJobId,
 } from "@/lib/mock-data";
 
 type InvoiceDetailPageProps = {
@@ -24,10 +26,15 @@ type InvoiceDetailPageProps = {
   }>;
 };
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 function paymentTone(status: string) {
   if (status === "Paid") return "success" as const;
   if (status === "Overdue") return "danger" as const;
-  if (status === "Partially paid") return "warning" as const;
+  if (status === "Partially paid" || status === "Part paid") return "warning" as const;
   return "neutral" as const;
 }
 
@@ -42,25 +49,31 @@ export default async function InvoiceDetailPage({
   params,
 }: InvoiceDetailPageProps) {
   const { invoiceId } = await params;
-  const invoice = getInvoiceById(invoiceId);
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
     notFound();
   }
 
-  const customer = getCustomerById(invoice.customerId);
-  const site = getSiteById(invoice.siteId);
-  const pool = getPoolById(invoice.poolId);
-  const job = getJobById(invoice.jobId);
-  const report = invoice.reportId ? getReportById(invoice.reportId) : undefined;
-  const paymentHistory = getPaymentsForInvoice(invoice.id);
-  const stockUsage = getStockUsageForInvoice(invoice.id);
+  const [customer, site, pool, job, report, paymentHistory, products] =
+    await Promise.all([
+      invoice.customerId
+        ? getCustomerById(invoice.customerId)
+        : Promise.resolve(undefined),
+      invoice.siteId ? getSiteById(invoice.siteId) : Promise.resolve(undefined),
+      invoice.poolId ? getPoolById(invoice.poolId) : Promise.resolve(undefined),
+      invoice.jobId ? getJobById(invoice.jobId) : Promise.resolve(undefined),
+      invoice.reportId ? getReportById(invoice.reportId) : Promise.resolve(undefined),
+      getPaymentsForInvoice(invoice.id),
+      getChemicalProducts(),
+    ]);
+  const stockUsage = invoice.jobId ? await getJobChemicalUsage(invoice.jobId) : [];
   const profitability = getJobProfitabilityByJobId(invoice.jobId);
 
   return (
     <SectionPage
       title={`${invoice.number}: Invoice`}
-      description="Mock invoice preview with payment history and Xero planning placeholders."
+      description="Invoice preview with payment history and Xero planning placeholders."
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone={paymentTone(invoice.paymentStatus)}>
@@ -254,23 +267,31 @@ export default async function InvoiceDetailPage({
           {stockUsage.length > 0 ? (
             <div className="space-y-3">
               {stockUsage.map((usage) => {
-                const product = getBioGuardProductById(usage.productId);
+                const product = products.find(
+                  (item) => item.id === usage.productId,
+                );
 
                 return (
                   <div
                     className="grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-[1fr_120px_120px_120px]"
                     key={usage.id}
                   >
-                    <Link
-                      className="font-semibold text-slate-950 hover:text-cyan-700"
-                      href={`/chemicals/${usage.productId}`}
-                    >
-                      {product?.name}
-                    </Link>
+                    {usage.productId ? (
+                      <Link
+                        className="font-semibold text-slate-950 hover:text-cyan-700"
+                        href={`/chemicals/${usage.productId}`}
+                      >
+                        {product?.name ?? usage.productName}
+                      </Link>
+                    ) : (
+                      <p className="font-semibold text-slate-950">
+                        {usage.productName}
+                      </p>
+                    )}
                     <p className="text-slate-600">{usage.quantityUsed}</p>
                     <p className="text-slate-600">{usage.cost}</p>
                     <p className="font-medium text-cyan-700">
-                      {usage.chargeAmount}
+                      {usage.stockDeducted ? "Deducted" : "Recorded"}
                     </p>
                   </div>
                 );
