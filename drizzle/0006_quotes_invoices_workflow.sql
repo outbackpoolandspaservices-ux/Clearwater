@@ -1,18 +1,42 @@
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "site_id" uuid;
+--> statement-breakpoint
 ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "pool_id" uuid;
+--> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "job_id" uuid;
 --> statement-breakpoint
 ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "report_id" uuid;
 --> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "quote_number" text;
+--> statement-breakpoint
 ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "approval_status" text DEFAULT 'Not sent' NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "subtotal_cents" integer DEFAULT 0 NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "gst_cents" integer DEFAULT 0 NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "issued_at" timestamp;
+--> statement-breakpoint
+ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "terms" text;
 --> statement-breakpoint
 ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "created_at" timestamp DEFAULT now() NOT NULL;
 --> statement-breakpoint
 ALTER TABLE "quotes" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL;
 --> statement-breakpoint
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "site_id" uuid;
+--> statement-breakpoint
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "pool_id" uuid;
+--> statement-breakpoint
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "quote_id" uuid;
+--> statement-breakpoint
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "job_id" uuid;
 --> statement-breakpoint
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "report_id" uuid;
 --> statement-breakpoint
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "payment_status" text DEFAULT 'Unpaid' NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "subtotal_cents" integer DEFAULT 0 NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "gst_cents" integer DEFAULT 0 NOT NULL;
 --> statement-breakpoint
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "created_at" timestamp DEFAULT now() NOT NULL;
 --> statement-breakpoint
