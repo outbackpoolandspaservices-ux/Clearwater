@@ -115,7 +115,7 @@ export default async function ReportDetailPage({
   return (
     <SectionPage
       title={`${report.reportNumber}: ${report.reportType}`}
-      description="Mock report preview. Real PDF generation, storage, and sending will be added later."
+      description="Customer-facing report preview for Outback Pool & Spa Services. Real PDF generation, storage, and sending are planned integrations."
     >
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -167,7 +167,7 @@ export default async function ReportDetailPage({
                 {report.reportType}
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                Outback Pool & Spa Services
+                Outback Pool & Spa Services, Alice Springs
               </p>
             </div>
             <dl className="grid gap-2 text-sm sm:text-right">
@@ -453,7 +453,7 @@ export default async function ReportDetailPage({
                       {section}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-600">
-                      Mock inspection content placeholder.
+                      Inspection notes placeholder for technician review.
                     </p>
                   </div>
                 ))}

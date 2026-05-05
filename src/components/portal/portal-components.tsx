@@ -36,14 +36,14 @@ export function PortalShell({
                   ClearWater
                 </p>
                 <p className="text-sm font-semibold text-cyan-800">
-                  Outback Pool & Spa Services
+                  Outback Pool & Spa Services, Alice Springs
                 </p>
               </div>
             </Link>
             <div className="rounded border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm text-slate-700">
               <span className="font-semibold text-slate-950">{customerName}</span>
               <span className="mx-2 text-cyan-700">|</span>
-              Customer portal preview
+              Customer portal preview by Outback Pool & Spa Services
             </div>
           </div>
           <nav className="flex gap-2 overflow-x-auto pb-1">

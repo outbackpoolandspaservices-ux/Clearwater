@@ -23,7 +23,7 @@ export default async function WaterTestingPage() {
   return (
     <SectionPage
       title="Water Testing"
-      description="Water chemistry readings, target ranges, dosing notes, visit history, and trend reporting for each pool."
+      description="Water chemistry readings, practical guide ranges, technician-reviewed BioGuard product suggestions, and test history for each pool."
     >
       <WaterTestingWorkspace
         customers={customers}

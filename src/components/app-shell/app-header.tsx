@@ -20,7 +20,7 @@ export function AppHeader() {
             ClearWater
           </Link>
           <p className="text-xs font-medium text-slate-500 sm:text-sm">
-            Outback Pool & Spa Services
+            Built for Outback Pool & Spa Services
           </p>
         </div>
 

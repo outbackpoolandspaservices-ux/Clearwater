@@ -115,8 +115,8 @@ export function ChemicalsWorkspace({
             Chemical and product register
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            BioGuard Australia examples only. More brands and suppliers can be
-            added later.
+            BioGuard Australia and Dryden Aqua foundation records. Technician
+            review is required before product advice is used with customers.
           </p>
         </div>
         {filteredProducts.length > 0 ? (

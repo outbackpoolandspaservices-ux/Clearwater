@@ -236,7 +236,7 @@ export default async function WaterTestDetailPage({
         </div>
       </DetailCard>
 
-      <DetailCard title="Readings outside target range">
+      <DetailCard title="Readings outside guide range">
         <div className="flex flex-wrap gap-2">
           {alertLabels.map((label) => {
             const active = (test.alerts as readonly string[]).includes(label);
@@ -290,7 +290,7 @@ export default async function WaterTestDetailPage({
         ) : (
           <div className="space-y-4">
             <EmptyState
-              description="BioGuard product recommendations will later use catalogue data, pool context, and technician review. No dosing is calculated yet."
+              description="BioGuard product recommendations will later use catalogue data, Alice Springs water context, pool history, and technician review. No exact dosing is calculated yet."
               title="Product intelligence planned"
             />
             <div className="flex flex-wrap gap-2">
@@ -308,7 +308,7 @@ export default async function WaterTestDetailPage({
         {legacyRecommendations.length > 0 ? (
           <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-950">
-              Legacy mock dosing examples retained for reference
+              Legacy mock treatment examples retained for reference
             </p>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
               {legacyRecommendations.map((recommendation) => {

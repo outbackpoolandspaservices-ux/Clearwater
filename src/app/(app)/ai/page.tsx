@@ -4,7 +4,8 @@ export default function AiPage() {
   return (
     <SectionPage
       title="AI"
-      description="AI-assisted service summaries, dispatch suggestions, water chemistry explanations, and customer-ready messaging."
+      description="Planned technician-reviewed assistance for service summaries, dispatch suggestions, water chemistry explanations, and customer-ready wording. ClearWater does not make automatic AI business decisions in the MVP."
+      statusLabel="Planned"
     />
   );
 }

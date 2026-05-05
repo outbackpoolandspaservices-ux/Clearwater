@@ -6,18 +6,31 @@ type SectionPageProps = {
   title: string;
   description: string;
   children?: React.ReactNode;
+  statusLabel?: string;
 };
 
-export function SectionPage({ title, description, children }: SectionPageProps) {
+export function SectionPage({
+  title,
+  description,
+  children,
+  statusLabel,
+}: SectionPageProps) {
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-5 py-8 sm:px-8">
       <header className="border-b border-slate-200 pb-6">
         <p className="text-sm font-medium text-cyan-700">
           ClearWater workspace
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-          {title}
-        </h1>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            {title}
+          </h1>
+          {statusLabel ? (
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+              {statusLabel}
+            </span>
+          ) : null}
+        </div>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
           {description}
         </p>
@@ -31,7 +44,7 @@ export function SectionPage({ title, description, children }: SectionPageProps) 
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               This module has a route, feature folder, and database direction so
-              future Codex work can add behavior without reshaping the app.
+              future ClearWater work can add behavior without reshaping the app.
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-5">

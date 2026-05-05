@@ -13,7 +13,7 @@ export default async function ChemicalsPage() {
   return (
     <SectionPage
       title="Chemicals"
-      description="Chemical catalogue, unit handling, safety notes, dosing references, and links to stock usage."
+      description="BioGuard-focused product intelligence for technician review, safety notes, Alice Springs water conditions, and links to van stock. Exact dosing automation is planned later."
     >
       <ChemicalsWorkspace products={products} />
     </SectionPage>

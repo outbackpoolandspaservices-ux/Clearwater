@@ -4,7 +4,8 @@ export default function IntegrationsPage() {
   return (
     <SectionPage
       title="Integrations"
-      description="Connection points for accounting, payments, email, SMS, maps, suppliers, and future field-service tools."
+      description="Planned connection points for Xero, payments, email, SMS, maps, suppliers, LaMotte SpinTouch, and future field-service tools. The MVP keeps these as placeholders until core workflows are stable."
+      statusLabel="Planned"
     />
   );
 }

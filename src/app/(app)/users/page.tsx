@@ -4,7 +4,8 @@ export default function UsersPage() {
   return (
     <SectionPage
       title="Users"
-      description="Staff, technician, finance, admin, and customer portal user management with role-based access control."
+      description="Planned staff, technician, finance, admin, and customer portal user management. Authentication helpers exist, but ClearWater does not enforce login until the workflow is fully tested."
+      statusLabel="Planned"
     />
   );
 }

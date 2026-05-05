@@ -22,7 +22,7 @@ export default async function ReportsPage() {
   return (
     <SectionPage
       title="Reports"
-      description="Operational and financial reports for job throughput, technician capacity, chemical usage, stock, and revenue."
+      description="Customer-facing service and inspection report previews for Outback Pool & Spa Services. Business performance reporting is planned for a later phase."
     >
       <ReportsWorkspace
         customers={customers}

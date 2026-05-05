@@ -1,6 +1,6 @@
 # Authentication And Permissions
 
-ClearWater is prepared for Auth.js, PostgreSQL, Drizzle, and role-based access control. Real login is not enforced yet so the current mock-data demo remains easy to review.
+ClearWater is prepared for Auth.js, PostgreSQL, Drizzle, and role-based access control. Real login is not enforced yet so the current MVP remains easy to review for Outback Pool & Spa Services.
 
 ## Auth Foundation
 
@@ -50,7 +50,7 @@ Use these variables while testing:
 - `CLEARWATER_ENFORCE_AUTH="false"` keeps the app accessible and returns a demo user.
 - `CLEARWATER_DEMO_ROLE="owner"` controls the demo role. Valid values are `owner`, `admin`, `dispatcher`, `technician`, `finance`, and `customer`.
 
-Only set `CLEARWATER_ENFORCE_AUTH="true"` after a real provider, seeded users, and role loading have been tested in Vercel.
+Only set `CLEARWATER_ENFORCE_AUTH="true"` after a real provider, seeded users, role loading, and customer portal access have been tested in Vercel.
 
 ## Future Enforcement Steps
 

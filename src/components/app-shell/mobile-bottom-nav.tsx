@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Settings,
   Smartphone,
-  Wrench,
+  TestTubeDiagonal,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -14,9 +14,9 @@ import { mobilePrimaryNavItems } from "@/features/navigation";
 
 const icons = {
   "/dashboard": LayoutDashboard,
-  "/jobs": Wrench,
-  "/dispatch": CalendarDays,
+  "/jobs": CalendarDays,
   "/technician/today": Smartphone,
+  "/water-testing": TestTubeDiagonal,
   "/settings": Settings,
 };
 
@@ -41,10 +41,10 @@ export function MobileBottomNav() {
             >
               <Icon className="h-5 w-5" aria-hidden="true" />
               <span>
-                {item.title === "Dispatch"
-                  ? "Calendar"
-                  : item.title === "Technician Today"
-                    ? "Tech"
+                {item.title === "Technician Today"
+                  ? "Tech"
+                  : item.title === "Water Testing"
+                    ? "Water"
                     : item.title}
               </span>
             </Link>

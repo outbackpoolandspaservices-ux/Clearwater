@@ -1,1 +1,1 @@
-export const customerPortalFeature = "customer-portal";
+export const portalFeature = "portal";

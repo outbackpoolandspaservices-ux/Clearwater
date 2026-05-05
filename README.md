@@ -1,6 +1,6 @@
 # ClearWater
 
-ClearWater is a professional pool service management system for Outback Pool & Spa Services in Alice Springs, Australia.
+ClearWater is a professional pool service management system built for Outback Pool & Spa Services in Alice Springs, Australia.
 
 The goal is to combine pool-specific depth from products like PoolTrackr with stronger field-service features inspired by ServiceM8, Skimmer, Pool Brain, Jobber, and Housecall Pro. ClearWater is intended to become a complete pool service operating system for servicing, repairs, inspections, scheduling, technician workflows, water testing, chemical dosing, communication, quotes, invoices, payments, reporting, stock control, route planning, and AI-assisted decision making.
 
@@ -41,7 +41,7 @@ src/
       quotes/
       invoices/
       reports/
-      customer-portal/
+      portal/
       routing/
       ai/
       integrations/
@@ -87,7 +87,7 @@ docs/
 
 The first working app shell includes:
 
-- Branded header for ClearWater and Outback Pool & Spa Services.
+- Branded header for ClearWater, built for Outback Pool & Spa Services.
 - Desktop sidebar navigation.
 - Mobile collapsible menu and bottom navigation.
 - Dashboard, jobs, dispatch, customers, properties/sites, pools, equipment, water testing, chemicals, stock, quotes, invoices, reports, customer portal, and settings pages.
@@ -217,7 +217,7 @@ Database-backed Add Customer:
 - The form saves customer contact, billing address, communication preference, internal notes, type, and status to PostgreSQL.
 - Billing/customer address is stored separately from future service site/property addresses. Sites and pools are not created by this form.
 - If no database URL is configured, the form fails safely with a friendly message.
-- After saving, ClearWater redirects back to `/customers`; the visible list remains mock-backed until database reads are enabled in a later migration step.
+- After saving, ClearWater redirects back to `/customers`; the list attempts PostgreSQL reads when a database URL is configured and falls back to mock data if needed.
 - Use `npm run db:verify` to confirm the safe customer table count without exposing database credentials.
 
 Database-backed Add Property/Site:
@@ -451,6 +451,7 @@ Safety notes:
 - `docs/database-schema.md`: planned PostgreSQL/Drizzle tables and migration path.
 - `docs/authentication-and-permissions.md`: Auth.js and RBAC planning.
 - `docs/data-migration-plan.md`: safe mock-data to database migration plan.
+- `docs/product-strategy-review.md`: MVP product strategy, UX boundaries, and planned/deferred scope.
 - `docs/product-requirements.md`: product goals, users, modules, and scope.
 - `docs/roadmap.md`: phased implementation plan.
 
