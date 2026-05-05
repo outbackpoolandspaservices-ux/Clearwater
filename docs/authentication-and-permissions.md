@@ -13,6 +13,13 @@ Auth.js is wired through:
 
 The Auth.js provider list is intentionally empty for now. A future step can choose email magic links, credentials, Google, Microsoft, or another provider without reshaping the app.
 
+Current-user and guard helpers now live in:
+
+- `src/lib/auth/current-user.ts`
+- `src/lib/auth/guards.ts`
+
+These helpers return the real Auth.js session user when one exists. If no session exists and `CLEARWATER_ENFORCE_AUTH` is not `true`, they return a safe demo user using `CLEARWATER_DEMO_ROLE`.
+
 ## Planned Roles
 
 ClearWater roles are:
@@ -34,7 +41,16 @@ Route access planning lives in `src/lib/auth/route-access.ts`.
 - Technician routes: `/technician` and `/technician/today`.
 - Customer portal routes: `/portal`, `/portal/jobs`, `/portal/reports`, `/portal/quotes`, and `/portal/invoices`.
 
-These helpers are not enforced yet. That is intentional for this phase.
+These helpers are not globally enforced yet. That is intentional for this phase so the deployed MVP stays reviewable.
+
+## Safe Demo Mode
+
+Use these variables while testing:
+
+- `CLEARWATER_ENFORCE_AUTH="false"` keeps the app accessible and returns a demo user.
+- `CLEARWATER_DEMO_ROLE="owner"` controls the demo role. Valid values are `owner`, `admin`, `dispatcher`, `technician`, `finance`, and `customer`.
+
+Only set `CLEARWATER_ENFORCE_AUTH="true"` after a real provider, seeded users, and role loading have been tested in Vercel.
 
 ## Future Enforcement Steps
 

@@ -117,6 +117,7 @@ The first working app shell includes:
 - Job Chemical Usage foundation is included in `drizzle/0005_job_chemical_usage.sql`. Job execution can record product usage from the chemical catalogue, optionally deduct matching van stock, write stock movement records, and show usage on job details and service report previews. Exact dosing automation and invoice preparation remain later phases.
 - Quotes and Invoices database workflow is included in `drizzle/0006_quotes_invoices_workflow.sql`. `/quotes`, `/quotes/new`, `/quotes/[quoteId]`, `/invoices`, `/invoices/new`, and `/invoices/[invoiceId]` now read/write PostgreSQL where available with mock fallback. Xero sync, payment gateway collection, quote approval, and conversion actions remain placeholders.
 - Customer Portal database workflow now reads from the same PostgreSQL-backed Customers, Properties/Sites, Pools, Jobs, Water Testing, Reports, Quotes, Invoices, and Payments data layers with mock fallback. It remains a safe demo portal without real authentication until the auth phase.
+- Authentication and role permissions foundation now includes safe current-user helpers, route guard helpers, demo-role configuration, and documented auth enforcement controls. Global login enforcement remains off by default to avoid locking the MVP during Vercel review.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -297,6 +298,13 @@ Customer Portal database workflow:
 - The portal uses the first available database customer when the original mock portal customer is not present, then filters linked sites, pools, jobs, water tests, reports, quotes, invoices, and payments for that customer.
 - Placeholder customer actions remain: request service, send message, approve/decline quote, pay invoice, and download PDF.
 - Real customer login, portal permissions, quote approval, payment processing, and message sending are later phases.
+
+Authentication and role permissions foundation:
+
+- Auth.js remains wired through `src/auth.ts`, `src/lib/auth/config.ts`, and `/api/auth/[...nextauth]`.
+- `src/lib/auth/current-user.ts` and `src/lib/auth/guards.ts` provide safe session/demo user helpers for future route protection.
+- Keep `CLEARWATER_ENFORCE_AUTH="false"` until a real provider and seeded users are tested.
+- Use `CLEARWATER_DEMO_ROLE` to test owner/admin/dispatcher/technician/finance/customer permission behaviour without locking yourself out.
 
 Database-backed Water Testing workflow:
 

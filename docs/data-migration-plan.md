@@ -132,6 +132,13 @@ The next workflow is Customer Portal database foundation:
 - Data source: `src/features/portal/portal-data.ts` composes existing database-backed feature data layers and keeps mock fallback through those loaders.
 - Boundary: this is still a demo/customer preview without real portal authentication. Customer login, role enforcement, quote approval, payment collection, message sending, and document download are later phases.
 
+The next workflow is Authentication and Role Permissions foundation:
+
+- Scope: safe current-user helper, role/permission guard helpers, demo-role configuration, login page status messaging, and documentation.
+- Files: `src/lib/auth/current-user.ts`, `src/lib/auth/guards.ts`, `src/lib/rbac/roles.ts`, and `src/lib/auth/route-access.ts`
+- Safety: `CLEARWATER_ENFORCE_AUTH` stays `false` by default. The helpers return a demo user when auth is not enforced so Vercel review and Codex development are not locked out.
+- Boundary: no global middleware enforcement yet. Real provider selection, seeded user login, customer portal sessions, and layout-level route protection remain later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
