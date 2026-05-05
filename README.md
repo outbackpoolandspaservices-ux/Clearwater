@@ -112,6 +112,7 @@ The first working app shell includes:
 - Service Report foundation reads reports from PostgreSQL when available, supports `/reports/new/service?jobId=...`, stores draft service reports in the current `reports` table, and renders customer-facing report previews from linked job, customer, property/site, pool, and water-test data. PDF generation, automatic email sending, photos/files, and AI-generated wording are later phases.
 - Reports database support is included in `drizzle/0002_add_reports_table.sql`. This migration safely creates the `reports` table and report enums when missing, with service-report fields for customer summary, work completed, follow-up, next service recommendation, internal notes, metadata, sent status, and timestamps.
 - BioGuard Product Intelligence foundation is included in `drizzle/0003_bioguard_product_intelligence.sql`. `/chemicals` and `/chemicals/[chemicalId]` now read BioGuard/Dryden Aqua product records from PostgreSQL when available with mock fallback. Seed data includes core BioGuard categories such as sanitisers, oxidisers, algaecides, balancers, specialty, salt pools, Mineral Springs, spa/commercial planning categories, and AFM filter media. Recommendations remain technician-reviewed guidance only; exact dosing automation comes later.
+- Chemical Recommendation foundation now appears on water test detail pages. It suggests product categories and possible BioGuard products from simple reading conditions, marks every suggestion as technician review-required, and can add selected products to linked job notes without dosing automation or stock deduction.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -248,6 +249,13 @@ Database-backed BioGuard Product Intelligence:
 - Product fields include brand, category, subcategory, active/strength note, purpose, suitable conditions, application notes, safety notes, related water issues, compatible pool types, and internal notes.
 - Product intelligence is guidance only. Full dosing calculations, customer-facing recommendations, stock deduction, and AI-assisted interpretation are later phases.
 - `/api/admin/database/chemicals/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+
+Chemical Recommendation foundation:
+
+- Open a water test detail page such as `/water-testing/[testId]`.
+- Simple rules suggest review-required product categories for low chlorine, high combined chlorine, pH, alkalinity, calcium hardness, high CYA, phosphate, algae notes, and salt pool scale risk.
+- Recommendations show possible BioGuard products from the product intelligence catalogue.
+- Linked jobs can receive selected products as technician notes. This does not calculate doses, deduct stock, or create customer-facing advice automatically.
 
 Database-backed Water Testing workflow:
 

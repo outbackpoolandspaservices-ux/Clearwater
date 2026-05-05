@@ -89,6 +89,14 @@ The next database-backed workflow is BioGuard Product Intelligence foundation:
 - Seed: BioGuard product records seed idempotently from `src/features/chemicals/data/bioguard-products.ts`.
 - Boundary: this is product intelligence only. Exact dosing automation, stock deduction, automatic customer-facing advice, and AI interpretation remain later phases.
 
+The next workflow is Chemical Recommendations foundation:
+
+- Route: `/water-testing/[testId]`
+- Scope: simple non-AI product category suggestions based on water test guide-range status, possible BioGuard products from the product intelligence catalogue, technician review-required wording, and optional adding of selected products to linked job notes.
+- Save path: server action in `src/features/water-testing/recommendation-actions.ts`
+- Database target: current `jobs` note columns only.
+- Safety: no exact dosing calculation, no stock deduction, and no automatic customer-facing advice.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.

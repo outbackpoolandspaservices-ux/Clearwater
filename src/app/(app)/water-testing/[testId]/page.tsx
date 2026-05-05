@@ -6,15 +6,18 @@ import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCustomerById } from "@/features/customers/data/customers";
+import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
+import { buildChemicalRecommendations } from "@/features/water-testing/chemical-recommendations";
 import { getWaterTestById } from "@/features/water-testing/data/water-tests";
 import {
   bioGuardRecommendationCategories,
   getGuideRangesForPool,
   readingStatus,
 } from "@/features/water-testing/guide-ranges";
+import { RecommendationReviewForm } from "@/features/water-testing/recommendation-review-form";
 import {
   getBioGuardProductById,
   getChemicalRecommendationsForTest,
@@ -68,7 +71,13 @@ export default async function WaterTestDetailPage({
     (site?.customerId ? await getCustomerById(site.customerId) : undefined);
   const technician = getTechnicianById(test.technicianId);
   const linkedJob = test.jobId ? await getJobById(test.jobId) : undefined;
-  const recommendations = getChemicalRecommendationsForTest(test.id);
+  const legacyRecommendations = getChemicalRecommendationsForTest(test.id);
+  const chemicalProducts = await getChemicalProducts();
+  const recommendations = buildChemicalRecommendations({
+    pool,
+    products: chemicalProducts,
+    test,
+  });
   const guideRanges = getGuideRangesForPool(pool);
   const chemistryReadings = [
     ["Free chlorine", test.freeChlorine, guideRanges.freeChlorine],
@@ -241,12 +250,10 @@ export default async function WaterTestDetailPage({
         </div>
       </DetailCard>
 
-      <DetailCard title="Chemical recommendations">
+      <DetailCard title="Chemical recommendation foundation">
         {recommendations.length > 0 ? (
           <div className="grid gap-4 xl:grid-cols-2">
             {recommendations.map((recommendation) => {
-              const product = getBioGuardProductById(recommendation.productId);
-
               return (
                 <article
                   key={recommendation.id}
@@ -256,42 +263,26 @@ export default async function WaterTestDetailPage({
                     {recommendation.issue}
                   </p>
                   <h2 className="mt-2 text-lg font-semibold text-slate-950">
-                    {product?.name ?? recommendation.productId}
+                    {recommendation.suggestedCategory}
                   </h2>
-                  <dl className="mt-4 space-y-3 text-sm">
-                    <div>
-                      <dt className="font-medium text-slate-500">
-                        Suggested dose
-                      </dt>
-                      <dd className="mt-1 text-slate-950">
-                        {recommendation.suggestedDose}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-slate-500">
-                        Application method
-                      </dt>
-                      <dd className="mt-1 text-slate-950">
-                        {recommendation.applicationMethod}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-slate-500">
-                        Safety / handling note
-                      </dt>
-                      <dd className="mt-1 text-slate-950">
-                        {recommendation.safetyNote}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="font-medium text-slate-500">
-                        Alternative product
-                      </dt>
-                      <dd className="mt-1 text-slate-950">
-                        {recommendation.alternativeProduct}
-                      </dd>
-                    </div>
-                  </dl>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {recommendation.reviewNote}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {recommendation.possibleProducts.length > 0 ? (
+                      recommendation.possibleProducts.map((product) => (
+                        <Link
+                          className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+                          href={`/chemicals/${product.id}`}
+                          key={product.id}
+                        >
+                          {product.name}
+                        </Link>
+                      ))
+                    ) : (
+                      <StatusBadge>Service recommendation</StatusBadge>
+                    )}
+                  </div>
                 </article>
               );
             })}
@@ -309,6 +300,41 @@ export default async function WaterTestDetailPage({
             </div>
           </div>
         )}
+        <RecommendationReviewForm
+          jobId={linkedJob?.id}
+          recommendations={recommendations}
+          testId={test.id}
+        />
+        {legacyRecommendations.length > 0 ? (
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-950">
+              Legacy mock dosing examples retained for reference
+            </p>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              {legacyRecommendations.map((recommendation) => {
+                const product = getBioGuardProductById(recommendation.productId);
+
+                return (
+                  <div
+                    className="rounded-md border border-slate-200 bg-white p-3 text-sm"
+                    key={recommendation.id}
+                  >
+                    <p className="font-semibold text-slate-950">
+                      {product?.name ?? recommendation.productId}
+                    </p>
+                    <p className="mt-1 text-slate-600">
+                      {recommendation.issue}
+                    </p>
+                    <p className="mt-1 text-slate-500">
+                      Review-required example only. Full dosing automation comes
+                      later.
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </DetailCard>
 
       <section className="grid gap-4 xl:grid-cols-3">
