@@ -14,6 +14,23 @@ import { roleSeeds, userRoleSeeds, userSeeds } from "./users-roles";
 type SeedValue = boolean | number | string | null;
 type SeedRow = Record<string, SeedValue>;
 
+class SeedGroupError extends Error {
+  constructor(
+    readonly seedGroup: string,
+    readonly tableName: string,
+    cause: unknown,
+  ) {
+    const message =
+      cause instanceof Error ? cause.message : "Unknown seed group error.";
+
+    super(
+      `Seed group "${seedGroup}" failed while seeding "${tableName}": ${message}`,
+    );
+    this.name = "SeedGroupError";
+    (this as Error & { cause?: unknown }).cause = cause;
+  }
+}
+
 function quoteIdentifier(identifier: string) {
   return `"${identifier.replaceAll('"', '""')}"`;
 }
@@ -94,6 +111,26 @@ async function upsertSeedRows(
        on conflict (${usableConflictColumns.map(quoteIdentifier).join(", ")}) ${conflictAction}`,
       values,
     );
+  }
+}
+
+async function seedGroup({
+  client,
+  conflictColumns,
+  label,
+  rows,
+  tableName,
+}: {
+  client: postgres.Sql;
+  conflictColumns?: string[];
+  label: string;
+  rows: SeedRow[];
+  tableName: string;
+}) {
+  try {
+    await upsertSeedRows(client, tableName, rows, conflictColumns);
+  } catch (error) {
+    throw new SeedGroupError(label, tableName, error);
   }
 }
 
@@ -296,19 +333,71 @@ function stockRows(): SeedRow[] {
 }
 
 export async function seedInitialClearWaterData(client: postgres.Sql) {
-  await upsertSeedRows(client, "organisations", organisationRows());
-  await upsertSeedRows(client, "users", userRows());
-  await upsertSeedRows(client, "roles", roleRows());
-  await upsertSeedRows(client, "user_roles", userRoleRows(), [
-    "user_id",
-    "role_id",
-    "organisation_id",
-  ]);
-  await upsertSeedRows(client, "customers", customerRows());
-  await upsertSeedRows(client, "sites", siteRows());
-  await upsertSeedRows(client, "properties", siteRows());
-  await upsertSeedRows(client, "pools", poolRows());
-  await upsertSeedRows(client, "equipment", equipmentRows());
-  await upsertSeedRows(client, "chemical_products", chemicalProductRows());
-  await upsertSeedRows(client, "stock", stockRows());
+  await seedGroup({
+    client,
+    label: "organisations",
+    rows: organisationRows(),
+    tableName: "organisations",
+  });
+  await seedGroup({
+    client,
+    label: "users/roles",
+    rows: userRows(),
+    tableName: "users",
+  });
+  await seedGroup({
+    client,
+    label: "users/roles",
+    rows: roleRows(),
+    tableName: "roles",
+  });
+  await seedGroup({
+    client,
+    conflictColumns: ["user_id", "role_id", "organisation_id"],
+    label: "users/roles",
+    rows: userRoleRows(),
+    tableName: "user_roles",
+  });
+  await seedGroup({
+    client,
+    label: "customers",
+    rows: customerRows(),
+    tableName: "customers",
+  });
+  await seedGroup({
+    client,
+    label: "properties",
+    rows: siteRows(),
+    tableName: "sites",
+  });
+  await seedGroup({
+    client,
+    label: "properties",
+    rows: siteRows(),
+    tableName: "properties",
+  });
+  await seedGroup({
+    client,
+    label: "pools",
+    rows: poolRows(),
+    tableName: "pools",
+  });
+  await seedGroup({
+    client,
+    label: "equipment",
+    rows: equipmentRows(),
+    tableName: "equipment",
+  });
+  await seedGroup({
+    client,
+    label: "BioGuard products",
+    rows: chemicalProductRows(),
+    tableName: "chemical_products",
+  });
+  await seedGroup({
+    client,
+    label: "stock",
+    rows: stockRows(),
+    tableName: "stock",
+  });
 }
