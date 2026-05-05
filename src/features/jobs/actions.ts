@@ -163,6 +163,16 @@ function parsePositiveInteger(value: string) {
   return parsed;
 }
 
+function parsePositiveNumber(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 function buildScheduledDateTime(date: string, time: string) {
   if (!date) {
     return null;
@@ -403,12 +413,19 @@ export async function updateJobExecutionAction(
   const checklist = getStrings(formData, "checklist");
   const checklistTotal = parsePositiveInteger(getString(formData, "checklistTotal")) ?? 0;
   const waterTestRecorded = getString(formData, "waterTestRecorded");
-  const chemicalProductPreset = getString(formData, "chemicalProductPreset");
+  const chemicalProductId = getString(formData, "chemicalProductId");
+  const chemicalProductNameFromCatalogue = getString(
+    formData,
+    "chemicalProductNameFromCatalogue",
+  );
   const chemicalProductName = getString(formData, "chemicalProductName");
   const chemicalQuantity = getString(formData, "chemicalQuantity");
+  const chemicalQuantityValue = parsePositiveNumber(chemicalQuantity);
   const chemicalUnit = getString(formData, "chemicalUnit");
   const chemicalReason = getString(formData, "chemicalReason");
   const chemicalNotes = getString(formData, "chemicalNotes");
+  const deductStock = getString(formData, "deductStock") === "yes";
+  const stockId = getString(formData, "stockId");
   const technicianNotes = getString(formData, "technicianNotes");
   const customerNotes = getString(formData, "customerNotes");
   const internalNotes = getString(formData, "internalNotes");
@@ -432,6 +449,14 @@ export async function updateJobExecutionAction(
 
   if (Object.keys(fieldErrors).length > 0) {
     return { fieldErrors };
+  }
+
+  if (chemicalQuantity && chemicalQuantityValue === null) {
+    return {
+      fieldErrors: {
+        chemicalQuantity: "Enter a quantity greater than 0.",
+      },
+    };
   }
 
   if (!hasDatabaseUrl()) {
@@ -462,9 +487,7 @@ export async function updateJobExecutionAction(
 
     const databaseStatus = statusToDatabaseStatus[status] ?? "on_hold";
     const chemicalName =
-      chemicalProductPreset === "Other"
-        ? chemicalProductName
-        : chemicalProductPreset || chemicalProductName;
+      chemicalProductNameFromCatalogue || chemicalProductName || chemicalProductId;
     const chemicalsNoted = Boolean(
       chemicalName || chemicalQuantity || chemicalReason || chemicalNotes,
     );
@@ -482,11 +505,13 @@ export async function updateJobExecutionAction(
       chemicalsNoted
         ? [
             "Chemicals used:",
+            chemicalProductId ? `Product ID: ${chemicalProductId}` : "",
             chemicalName ? `Product: ${chemicalName}` : "",
             chemicalQuantity ? `Quantity: ${chemicalQuantity}` : "",
             chemicalUnit ? `Unit: ${chemicalUnit}` : "",
             chemicalReason ? `Reason: ${chemicalReason}` : "",
             chemicalNotes ? `Notes: ${chemicalNotes}` : "",
+            deductStock && stockId ? `Stock deducted: ${stockId}` : "",
           ]
             .filter(Boolean)
             .join(" ")
@@ -545,6 +570,99 @@ export async function updateJobExecutionAction(
        where "id" = $${values.length + 1}`,
       [...values, jobId],
     );
+
+    if (
+      chemicalsNoted &&
+      chemicalQuantityValue !== null &&
+      (await tableExists(client, "job_chemical_usage"))
+    ) {
+      const usageColumns = await getTableColumns(client, "job_chemical_usage");
+      const organisationId = usageColumns.has("organisation_id")
+        ? await getDefaultOrganisationId(client)
+        : null;
+      const usageValues: Record<string, boolean | Date | number | string | null> = {
+        organisation_id: organisationId,
+        job_id: jobId,
+        stock_id: stockId || null,
+        product_id: chemicalProductId || null,
+        product_name: chemicalName || "Chemical product",
+        quantity: chemicalQuantityValue,
+        unit: chemicalUnit || "unit",
+        reason: chemicalReason || null,
+        notes: chemicalNotes || null,
+        stock_deducted: false,
+        created_at: new Date(),
+      };
+
+      if (deductStock && stockId && (await tableExists(client, "stock"))) {
+        const stockColumns = await getTableColumns(client, "stock");
+
+        if (
+          stockColumns.has("id") &&
+          stockColumns.has("quantity_on_hand")
+        ) {
+          const updatedAtSet = stockColumns.has("updated_at")
+            ? `, "updated_at" = now()`
+            : "";
+
+          await client.unsafe(
+            `update "stock"
+             set "quantity_on_hand" = greatest(0, "quantity_on_hand" - $1)
+                 ${updatedAtSet}
+             where "id" = $2`,
+            [chemicalQuantityValue, stockId],
+          );
+          usageValues.stock_deducted = true;
+        }
+
+        if (chemicalProductId && (await tableExists(client, "stock_movements"))) {
+          const movementColumns = await getTableColumns(client, "stock_movements");
+          const movementValues: Record<string, Date | number | string | null> = {
+            organisation_id: organisationId,
+            stock_id: stockId,
+            product_id: chemicalProductId || null,
+            job_id: jobId,
+            movement_type: "job_usage",
+            quantity: chemicalQuantityValue,
+            unit: chemicalUnit || "unit",
+            note:
+              chemicalReason || chemicalNotes
+                ? [chemicalReason, chemicalNotes].filter(Boolean).join(" - ")
+                : "Used on job",
+            created_at: new Date(),
+          };
+          const movementInsertColumns = Object.keys(movementValues).filter(
+            (column) => movementColumns.has(column),
+          );
+          const movementPlaceholders = movementInsertColumns
+            .map((_, index) => `$${index + 1}`)
+            .join(", ");
+
+          await client.unsafe(
+            `insert into "stock_movements" (${movementInsertColumns
+              .map(quoteIdentifier)
+              .join(", ")})
+             values (${movementPlaceholders})`,
+            movementInsertColumns.map((column) => movementValues[column]),
+          );
+        }
+      }
+
+      const usageInsertColumns = Object.keys(usageValues).filter((column) =>
+        usageColumns.has(column),
+      );
+      const usagePlaceholders = usageInsertColumns
+        .map((_, index) => `$${index + 1}`)
+        .join(", ");
+
+      await client.unsafe(
+        `insert into "job_chemical_usage" (${usageInsertColumns
+          .map(quoteIdentifier)
+          .join(", ")})
+         values (${usagePlaceholders})`,
+        usageInsertColumns.map((column) => usageValues[column]),
+      );
+    }
   } catch (error) {
     console.error("Job execution update failed", {
       ...safeErrorSummary(error),

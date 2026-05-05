@@ -565,6 +565,23 @@ export const stockMovements = pgTable("stock_movements", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 
+export const jobChemicalUsage = pgTable("job_chemical_usage", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organisationId: uuid("organisation_id").references(() => organisations.id),
+  jobId: uuid("job_id")
+    .notNull()
+    .references(() => jobs.id),
+  stockId: uuid("stock_id").references(() => stock.id),
+  productId: text("product_id").references(() => chemicalProducts.id),
+  productName: text("product_name").notNull(),
+  quantity: real("quantity").notNull(),
+  unit: text("unit").notNull(),
+  reason: text("reason"),
+  notes: text("notes"),
+  stockDeducted: boolean("stock_deducted").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
 export const quotes = pgTable("quotes", {
   id: uuid("id").primaryKey().defaultRandom(),
   organisationId: uuid("organisation_id")
@@ -853,6 +870,7 @@ export const jobRelations = relations(jobs, ({ one, many }) => ({
   waterTests: many(waterTests),
   reports: many(reports),
   stockMovements: many(stockMovements),
+  chemicalUsage: many(jobChemicalUsage),
 }));
 
 export const visitRelations = relations(visits, ({ one }) => ({

@@ -5,6 +5,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useActionState, useMemo, useState } from "react";
 
 import { StatusBadge } from "@/components/ui/status-badge";
+import type { ChemicalProductRecord } from "@/features/chemicals/data/chemicals";
 import type { CustomerRecord } from "@/features/customers/data/customers";
 import {
   updateJobExecutionAction,
@@ -13,6 +14,7 @@ import {
 import type { JobRecord } from "@/features/jobs/data/jobs";
 import type { PoolRecord } from "@/features/pools/data/pools";
 import type { SiteRecord } from "@/features/properties/data/sites";
+import type { StockRecord } from "@/features/stock/data/stock";
 
 type TechnicianOption = {
   id: string;
@@ -49,20 +51,6 @@ const checklistItems = [
   "Site secured before leaving",
 ];
 
-const chemicalOptions = [
-  "Liquid chlorine",
-  "Cal Hypo",
-  "Hydrochloric acid",
-  "Sodium bicarbonate",
-  "Soda ash",
-  "Stabiliser",
-  "Salt",
-  "Phosphate remover",
-  "Clarifier",
-  "Algaecide",
-  "Other",
-];
-
 function Field({
   children,
   helpText,
@@ -91,14 +79,18 @@ export function JobExecutionForm({
   customer,
   job,
   pool,
+  products,
   site,
+  stockRecords,
   technician,
   waterTestCount,
 }: {
   customer?: CustomerRecord;
   job: JobRecord;
   pool?: PoolRecord;
+  products: ChemicalProductRecord[];
   site?: SiteRecord;
+  stockRecords: StockRecord[];
   technician?: TechnicianOption;
   waterTestCount: number;
 }) {
@@ -110,9 +102,10 @@ export function JobExecutionForm({
   const [status, setStatus] = useState(
     job.status === "Completed" ? "completed" : "in_progress",
   );
-  const [chemicalPreset, setChemicalPreset] = useState("");
+  const [chemicalProductId, setChemicalProductId] = useState("");
   const [chemicalQuantity, setChemicalQuantity] = useState("");
   const [chemicalReason, setChemicalReason] = useState("");
+  const [deductStock, setDeductStock] = useState(false);
   const [followUpRequired, setFollowUpRequired] = useState(false);
   const [quoteRequired, setQuoteRequired] = useState(false);
   const [partsRequired, setPartsRequired] = useState(false);
@@ -120,8 +113,14 @@ export function JobExecutionForm({
     useState(false);
   const waterTestRecorded = waterTestCount > 0;
   const chemicalsNoted = Boolean(
-    chemicalPreset || chemicalQuantity || chemicalReason,
+    chemicalProductId || chemicalQuantity || chemicalReason,
   );
+  const selectedProduct = products.find(
+    (product) => product.id === chemicalProductId,
+  );
+  const matchingStock = chemicalProductId
+    ? stockRecords.filter((stock) => stock.productId === chemicalProductId)
+    : stockRecords;
   const waterTestHref = useMemo(() => {
     const params = new URLSearchParams({
       jobId: job.id,
@@ -313,30 +312,35 @@ export function JobExecutionForm({
             Chemicals used
           </h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Notes only for now. Stock deduction and BioGuard dosing automation
-            will be added later.
+            Select from the product catalogue, record quantity used, and
+            optionally deduct from van stock. Dosing automation comes later.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <Field label="Product/chemical">
               <select
                 className={inputClassName}
-                name="chemicalProductPreset"
-                onChange={(event) => setChemicalPreset(event.target.value)}
-                value={chemicalPreset}
+                name="chemicalProductId"
+                onChange={(event) => setChemicalProductId(event.target.value)}
+                value={chemicalProductId}
               >
                 <option value="">Choose or type manually</option>
-                {chemicalOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {product.name} - {product.category}
                   </option>
                 ))}
               </select>
+              <input
+                name="chemicalProductNameFromCatalogue"
+                type="hidden"
+                value={selectedProduct?.name ?? ""}
+              />
             </Field>
             <Field label="Manual product name">
               <input
                 className={inputClassName}
                 name="chemicalProductName"
-                placeholder="Use if Other or not listed"
+                placeholder="Use if product is not listed"
                 type="text"
               />
             </Field>
@@ -359,8 +363,41 @@ export function JobExecutionForm({
                 <option value="g">g</option>
                 <option value="tablet">tablet</option>
                 <option value="bag">bag</option>
+                <option value="unit">unit</option>
               </select>
             </Field>
+            <div className="sm:col-span-2">
+              <label className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-700">
+                <input
+                  checked={deductStock}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                  name="deductStock"
+                  onChange={(event) => setDeductStock(event.target.checked)}
+                  type="checkbox"
+                  value="yes"
+                />
+                <span>
+                  Deduct from van stock if a matching stock record is selected
+                </span>
+              </label>
+            </div>
+            {deductStock ? (
+              <div className="sm:col-span-2">
+                <Field
+                  helpText="ClearWater subtracts the entered quantity without unit conversion. Use matching units for now."
+                  label="Stock record"
+                >
+                  <select className={inputClassName} defaultValue="" name="stockId">
+                    <option value="">Record usage only, no stock deduction</option>
+                    {matchingStock.map((stock) => (
+                      <option key={stock.id} value={stock.id}>
+                        {stock.vanName} - {stock.quantityOnHand} {stock.unit} on hand
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            ) : null}
             <div className="sm:col-span-2">
               <Field label="Reason">
                 <input

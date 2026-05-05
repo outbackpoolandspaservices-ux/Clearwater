@@ -114,6 +114,7 @@ The first working app shell includes:
 - BioGuard Product Intelligence foundation is included in `drizzle/0003_bioguard_product_intelligence.sql`. `/chemicals` and `/chemicals/[chemicalId]` now read BioGuard/Dryden Aqua product records from PostgreSQL when available with mock fallback. Seed data includes core BioGuard categories such as sanitisers, oxidisers, algaecides, balancers, specialty, salt pools, Mineral Springs, spa/commercial planning categories, and AFM filter media. Recommendations remain technician-reviewed guidance only; exact dosing automation comes later.
 - Chemical Recommendation foundation now appears on water test detail pages. It suggests product categories and possible BioGuard products from simple reading conditions, marks every suggestion as technician review-required, and can add selected products to linked job notes without dosing automation or stock deduction.
 - Stock and Van Inventory database foundation is included in `drizzle/0004_stock_van_inventory.sql`. `/stock` reads van stock from PostgreSQL when available with mock fallback, `/stock/new` creates stock records and an initial stock movement, and seed data safely loads starter van stock for service technicians. Stock adjustment, transfer, used-on-job, write-off, supplier ordering, accounting, and automatic stock deduction remain later phases.
+- Job Chemical Usage foundation is included in `drizzle/0005_job_chemical_usage.sql`. Job execution can record product usage from the chemical catalogue, optionally deduct matching van stock, write stock movement records, and show usage on job details and service report previews. Exact dosing automation and invoice preparation remain later phases.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -267,6 +268,16 @@ Database-backed Stock and Van Inventory workflow:
 - The protected setup route and `npm run db:seed` can seed starter BioGuard van stock idempotently.
 - `/api/admin/database/stock/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
 - Stock movements are prepared for received, adjustment, transfer, used-on-job, reorder, and write-off workflows. Job stock deduction and accounting integration are later phases.
+
+Job Chemical Usage and Stock Deduction foundation:
+
+- Open `/jobs/[jobId]/execute` to record chemicals/products used during a job.
+- Product selection uses the BioGuard/product register when available and still allows manual product names.
+- Technicians can enter quantity, unit, reason, and notes.
+- If a matching stock record is selected, ClearWater deducts the entered quantity from van stock and writes a `stock_movements` row. Unit conversion is not automated yet, so technicians should use matching units.
+- `/jobs/[jobId]` and `/reports/[reportId]` show linked chemical usage with mock fallback.
+- `/api/admin/database/job-chemical-usage/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+- Stock deduction is a foundation only. Exact BioGuard dosing, invoice line item preparation, supplier reordering, and accounting integration are later phases.
 
 Database-backed Water Testing workflow:
 

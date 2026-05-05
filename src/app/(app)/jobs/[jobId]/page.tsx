@@ -5,15 +5,15 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobChemicalUsage } from "@/features/jobs/data/chemical-usage";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
 import {
   getEquipmentForPool,
-  getBioGuardProductById,
   getJobProfitabilityByJobId,
-  getStockUsageForJob,
   getTechnicianById,
   getWaterTestsByIds,
   invoices,
@@ -86,10 +86,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     notFound();
   }
 
-  const [customer, pool, site] = await Promise.all([
+  const [customer, pool, site, products, jobUsage] = await Promise.all([
     getCustomerById(job.customerId),
     job.poolId ? getPoolById(job.poolId) : Promise.resolve(undefined),
     getSiteById(job.siteId),
+    getChemicalProducts(),
+    getJobChemicalUsage(job.id),
   ]);
   const technician = getTechnicianById(job.technicianId);
   const linkedEquipment = pool ? getEquipmentForPool(pool.id) : [];
@@ -98,7 +100,6 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   const linkedInvoice = invoices.find(
     (invoice) => invoice.number === job.invoiceId,
   );
-  const jobUsage = getStockUsageForJob(job.id);
   const profitability = getJobProfitabilityByJobId(job.id);
   const activeStep = statusStepMap[job.status] ?? "New";
   const activeStepIndex = workflowSteps.indexOf(activeStep);
@@ -444,23 +445,31 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
           {jobUsage.length > 0 ? (
             <div className="space-y-3">
               {jobUsage.map((usage) => {
-                const product = getBioGuardProductById(usage.productId);
+                const product = products.find(
+                  (item) => item.id === usage.productId,
+                );
 
                 return (
                   <div
                     className="grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-[1fr_120px_120px_120px]"
                     key={usage.id}
                   >
-                    <Link
-                      className="font-semibold text-slate-950 hover:text-cyan-700"
-                      href={`/chemicals/${usage.productId}`}
-                    >
-                      {product?.name}
-                    </Link>
+                    {usage.productId ? (
+                      <Link
+                        className="font-semibold text-slate-950 hover:text-cyan-700"
+                        href={`/chemicals/${usage.productId}`}
+                      >
+                        {product?.name ?? usage.productName}
+                      </Link>
+                    ) : (
+                      <p className="font-semibold text-slate-950">
+                        {usage.productName}
+                      </p>
+                    )}
                     <p className="text-slate-600">{usage.quantityUsed}</p>
                     <p className="text-slate-600">{usage.cost}</p>
                     <p className="font-medium text-cyan-700">
-                      {usage.margin}
+                      {usage.stockDeducted ? "Stock deducted" : "Recorded only"}
                     </p>
                   </div>
                 );

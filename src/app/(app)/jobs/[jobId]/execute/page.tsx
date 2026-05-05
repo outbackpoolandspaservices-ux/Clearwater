@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 
 import { SectionPage } from "@/components/app-shell/section-page";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getCustomerById } from "@/features/customers/data/customers";
 import { JobExecutionForm } from "@/features/jobs/job-execution-form";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
+import { getStockWithSource } from "@/features/stock/data/stock";
 import { getWaterTests } from "@/features/water-testing/data/water-tests";
 import { getTechnicianById } from "@/lib/mock-data";
 
@@ -40,11 +42,13 @@ export default async function JobExecutionPage({
     notFound();
   }
 
-  const [customer, pool, site, waterTests] = await Promise.all([
+  const [customer, pool, site, waterTests, products, stockResult] = await Promise.all([
     getCustomerById(job.customerId),
     job.poolId ? getPoolById(job.poolId) : Promise.resolve(undefined),
     getSiteById(job.siteId),
     getWaterTests(),
+    getChemicalProducts(),
+    getStockWithSource(),
   ]);
   const technician = getTechnicianById(job.technicianId);
   const linkedWaterTests = waterTests.filter(
@@ -73,7 +77,9 @@ export default async function JobExecutionPage({
         customer={customer}
         job={job}
         pool={pool}
+        products={products}
         site={site}
+        stockRecords={stockResult.stock}
         technician={technician}
         waterTestCount={linkedWaterTests.length}
       />

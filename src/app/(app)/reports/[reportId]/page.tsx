@@ -6,6 +6,7 @@ import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCustomerById } from "@/features/customers/data/customers";
+import { getJobChemicalUsage } from "@/features/jobs/data/chemical-usage";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
@@ -102,6 +103,7 @@ export default async function ReportDetailPage({
       : Promise.resolve(undefined),
   ]);
   const technician = getTechnicianById(report.technicianId || job?.technicianId || "");
+  const jobUsage = job ? await getJobChemicalUsage(job.id) : [];
   const recommendations = waterTest
     ? getChemicalRecommendationsForTest(waterTest.id)
     : [];
@@ -291,7 +293,27 @@ export default async function ReportDetailPage({
           </ReportSection>
 
           <ReportSection title="Chemicals added">
-            {waterTest && waterTest.chemicalsAdded.length > 0 ? (
+            {jobUsage.length > 0 ? (
+              <div className="space-y-3">
+                {jobUsage.map((usage) => (
+                  <div
+                    className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm"
+                    key={usage.id}
+                  >
+                    <p className="font-semibold text-slate-950">
+                      {usage.productName}
+                    </p>
+                    <p className="mt-1 text-slate-600">
+                      {usage.quantityUsed}
+                      {usage.reason ? ` - ${usage.reason}` : ""}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-cyan-700">
+                      {usage.stockDeducted ? "Stock deducted" : "Recorded only"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : waterTest && waterTest.chemicalsAdded.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {waterTest.chemicalsAdded.map((chemical) => (
                   <StatusBadge key={chemical}>{chemical}</StatusBadge>
