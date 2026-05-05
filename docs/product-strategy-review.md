@@ -4,6 +4,14 @@ ClearWater is the pool service management app. Outback Pool & Spa Services is th
 
 Use `ClearWater` for the software/app name throughout the interface. Use `Outback Pool & Spa Services` for customer-facing provider wording in portals, reports, quotes, invoices, and service documents.
 
+## PoolTrackr Reference Learnings
+
+PoolTrackr screenshots reinforced that pool-service software needs pool-specific operational depth: customers/contacts, pools, products, water testing, recurring jobs, technician scheduling, analytics, finance summaries, and dense searchable lists. ClearWater keeps those useful concepts but improves the workflow connection between them.
+
+ClearWater should be better by making dashboard cards, table rows, alerts, workload items, and action buttons lead to the exact filtered list or detail page. Jobs should not stop at a list; they should lead into dispatch, maps, technician execution, water testing, chemical usage, reports, quotes, and invoices. Customer, property/site, and pool relationships should stay obvious because one agency or owner may manage multiple addresses and pools.
+
+Deferred features remain deliberate: Xero, payments, SMS/email, real PDF, file storage, offline/mobile packaging, route provider integration, full BioGuard dosing automation, and enforced authentication should wait until the core data and workflow paths are reliable.
+
 ## MVP Position
 
 ClearWater should combine pool-specific depth from PoolTrackr-style systems with the most useful field-service workflow patterns from ServiceM8, Jobber, Skimmer, Pool Brain, and Housecall Pro.

@@ -11,7 +11,18 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-export default async function WaterTestingPage() {
+type WaterTestingPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function WaterTestingPage({
+  searchParams,
+}: WaterTestingPageProps) {
+  const params = searchParams ? await searchParams : {};
   const [customers, pools, sites, waterTestsResult] = await Promise.all([
     getCustomers(),
     getPools(),
@@ -30,6 +41,7 @@ export default async function WaterTestingPage() {
         pools={pools}
         sites={sites}
         technicians={technicians}
+        initialStatus={firstParam(params.status)}
         waterTests={waterTests}
       />
     </SectionPage>

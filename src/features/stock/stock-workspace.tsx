@@ -27,11 +27,13 @@ function stockTone(status: string) {
 }
 
 export function StockWorkspace({
+  initialFilter,
   initialSearch,
   products,
   stockRecords,
   usageRecords,
 }: {
+  initialFilter?: string;
   initialSearch?: string;
   products: ChemicalProductRecord[];
   stockRecords: StockRecord[];
@@ -40,7 +42,9 @@ export function StockWorkspace({
   const [search, setSearch] = useState(initialSearch ?? "");
   const [technician, setTechnician] = useState(allValue);
   const [category, setCategory] = useState(allValue);
-  const [lowStock, setLowStock] = useState(allValue);
+  const [lowStock, setLowStock] = useState(
+    initialFilter === "low" ? "low" : allValue,
+  );
   const [brand, setBrand] = useState(allValue);
 
   const filteredStock = useMemo(() => {

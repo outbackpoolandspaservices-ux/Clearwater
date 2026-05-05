@@ -92,6 +92,7 @@ The first working app shell includes:
 - Mobile collapsible menu and bottom navigation.
 - Dashboard, jobs, dispatch, customers, properties/sites, pools, equipment, water testing, chemicals, stock, quotes, invoices, reports, customer portal, and settings pages.
 - Dashboard drill-down navigation for jobs, unscheduled work, pending quotes, unpaid invoices, low stock, water chemistry alerts, technician workload, and quick actions.
+- PoolTrackr reference learnings have been translated into ClearWater-specific improvements: clickable command centre, analytics/finance foundations, cleaner dispatch planning, connected job execution, clearer customer/site/pool relationships, BioGuard product search, and explicit planned labels for integrations.
 - First mock-data business workflow for Customers, Properties/Sites, and Pools, including linked list and detail pages.
 - First mock-data Jobs workflow, including searchable job list, filters, detail pages, workflow timeline, technician actions, and recurring job examples.
 - Mock-data Dispatch Calendar and Technician Today workflows, including route-order placeholders, daily run actions, unscheduled jobs, recurring jobs, and mobile technician job cards.
@@ -452,6 +453,9 @@ Safety notes:
 - `docs/authentication-and-permissions.md`: Auth.js and RBAC planning.
 - `docs/data-migration-plan.md`: safe mock-data to database migration plan.
 - `docs/mvp-qa-issue-register.md`: MVP QA checklist and remaining issue register before real business use.
+- `docs/pooltrackr-comparison-and-clearwater-improvements.md`: PoolTrackr screenshot learnings and ClearWater workflow improvements.
+- `docs/clearwater-workflow-map.md`: practical ClearWater workflow map from dashboard to job execution, reports, stock, and portal.
+- `docs/product-gap-roadmap.md`: remaining product, integration, intelligence, access, and mobile gaps.
 - `docs/product-strategy-review.md`: MVP product strategy, UX boundaries, and planned/deferred scope.
 - `docs/product-requirements.md`: product goals, users, modules, and scope.
 - `docs/roadmap.md`: phased implementation plan.

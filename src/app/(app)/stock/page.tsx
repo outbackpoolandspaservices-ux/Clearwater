@@ -29,6 +29,7 @@ export default async function StockPage({ searchParams }: StockPageProps) {
       description="Van inventory, low-stock warnings, mock stock movement, supplier placeholders, and job consumption tracking."
     >
       <StockWorkspace
+        initialFilter={firstParam(params.filter)}
         initialSearch={firstParam(params.search)}
         products={products}
         stockRecords={stock}

@@ -35,6 +35,12 @@ export default async function PortalPage() {
       description="View your upcoming pool work, recent service records, water test results, quotes, invoices, and messages from Outback Pool & Spa Services."
       customerName={customer.name}
     >
+      <div className="mb-5 rounded-lg border border-cyan-200 bg-cyan-50 p-4 text-sm leading-6 text-cyan-950">
+        Customer portal login is planned. This MVP shows a safe demo customer
+        view so Outback Pool & Spa Services can review the portal experience
+        before authentication and payment links are switched on.
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <PortalCard title={`${upcomingJobs.length}`} eyebrow="Upcoming jobs">
           <p className="text-sm text-slate-600">

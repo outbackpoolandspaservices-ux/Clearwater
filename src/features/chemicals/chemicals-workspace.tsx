@@ -24,6 +24,7 @@ export function ChemicalsWorkspace({
 }: {
   products: ChemicalProductRecord[];
 }) {
+  const [search, setSearch] = useState("");
   const [brand, setBrand] = useState(allValue);
   const [category, setCategory] = useState(allValue);
   const [purpose, setPurpose] = useState(allValue);
@@ -31,19 +32,42 @@ export function ChemicalsWorkspace({
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      const searchText = search.trim().toLowerCase();
+      const haystack = [
+        product.name,
+        product.brand,
+        product.category,
+        product.subcategory,
+        product.purpose,
+        product.productStrength,
+        product.relatedWaterIssues?.join(" "),
+        product.applicationMethod,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
       return (
+        (!searchText || haystack.includes(searchText)) &&
         (brand === allValue || product.brand === brand) &&
         (category === allValue || product.category === category) &&
         (purpose === allValue || product.purpose === purpose) &&
         (status === allValue || product.status === status)
       );
     });
-  }, [brand, category, products, purpose, status]);
+  }, [brand, category, products, purpose, search, status]);
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-slate-200 bg-white p-4">
-        <div className="grid gap-3 lg:grid-cols-[repeat(4,1fr)_auto] lg:items-center">
+        <div className="grid gap-3 lg:grid-cols-[1.3fr_repeat(4,1fr)_auto] lg:items-center">
+          <input
+            className="min-h-10 rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search products, water issues, purpose, or strength"
+            type="search"
+            value={search}
+          />
           <select
             className="min-h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
             onChange={(event) => setBrand(event.target.value)}
@@ -104,7 +128,7 @@ export function ChemicalsWorkspace({
             className="min-h-10 rounded-md bg-cyan-600 px-4 text-sm font-semibold text-white hover:bg-cyan-700"
             type="button"
           >
-            Add Chemical/Product
+            Add Product Placeholder
           </button>
         </div>
       </section>
@@ -132,6 +156,7 @@ export function ChemicalsWorkspace({
                   <th className="px-5 py-3 font-semibold">Strength</th>
                   <th className="px-5 py-3 font-semibold">Application</th>
                   <th className="px-5 py-3 font-semibold">Safety note</th>
+                  <th className="px-5 py-3 font-semibold">Review</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                 </tr>
               </thead>
@@ -164,6 +189,9 @@ export function ChemicalsWorkspace({
                     </td>
                     <td className="px-5 py-4 text-slate-600">
                       {product.handlingNote}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      Technician review required
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge tone={productTone(product.status)}>

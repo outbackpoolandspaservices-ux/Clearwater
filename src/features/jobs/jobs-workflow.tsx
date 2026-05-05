@@ -13,9 +13,11 @@ import type { SiteRecord } from "@/features/properties/data/sites";
 const allValue = "all";
 type JobInitialFilters = {
   date?: string;
+  followUp?: string;
   scheduled?: string;
   status?: string;
   technician?: string;
+  type?: string;
 };
 type TechnicianRecord = {
   id: string;
@@ -134,6 +136,16 @@ function resolveTechnicianFilter(
   return matchingTechnician?.id ?? technician;
 }
 
+function resolveJobTypeFilter(type: string | undefined, jobs: JobRecord[]) {
+  if (!type) return allValue;
+
+  const matchingType = unique(jobs.map((job) => job.jobType)).find(
+    (item) => normalise(item) === normalise(type),
+  );
+
+  return matchingType ?? type;
+}
+
 export function JobsWorkflow({
   customers,
   initialFilters,
@@ -158,12 +170,15 @@ export function JobsWorkflow({
   const [technician, setTechnician] = useState(() =>
     resolveTechnicianFilter(initialFilters?.technician, technicians),
   );
-  const [jobType, setJobType] = useState(allValue);
+  const [jobType, setJobType] = useState(() =>
+    resolveJobTypeFilter(initialFilters?.type, jobs),
+  );
   const [priority, setPriority] = useState(allValue);
   const dateFilter = normalise(initialFilters?.date ?? "");
   const unscheduledFilter =
     initialFilters?.scheduled === "false" ||
     normalise(initialFilters?.status ?? "") === "unscheduled";
+  const followUpFilter = initialFilters?.followUp === "true";
 
   const filteredJobs = useMemo(() => {
     const searchText = search.trim().toLowerCase();
@@ -197,11 +212,16 @@ export function JobsWorkflow({
         (jobType === allValue || job.jobType === jobType) &&
         (priority === allValue || job.priority === priority) &&
         (dateFilter !== "today" || isTodayJob(job)) &&
-        (!unscheduledFilter || isUnscheduledJob(job))
+        (!unscheduledFilter || isUnscheduledJob(job)) &&
+        (!followUpFilter ||
+          job.status.toLowerCase().includes("follow") ||
+          job.internalNotes.toLowerCase().includes("follow") ||
+          job.customerNotes.toLowerCase().includes("follow"))
       );
     });
   }, [
     dateFilter,
+    followUpFilter,
     jobType,
     jobs,
     pools,
@@ -289,11 +309,21 @@ export function JobsWorkflow({
           >
             Create Job
           </Link>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            href="/jobs/recurring"
+          >
+            Recurring Foundation
+          </Link>
         </div>
-        {(dateFilter === "today" || unscheduledFilter) ? (
+        {(dateFilter === "today" || unscheduledFilter || followUpFilter) ? (
           <p className="mt-3 rounded-md bg-cyan-50 px-3 py-2 text-sm text-cyan-900">
             Dashboard filter active:{" "}
-            {dateFilter === "today" ? "today's jobs" : "unscheduled jobs"}.
+            {dateFilter === "today"
+              ? "today's jobs"
+              : unscheduledFilter
+                ? "unscheduled jobs"
+                : "follow-up required"}.
           </p>
         ) : null}
       </section>
@@ -321,7 +351,7 @@ export function JobsWorkflow({
                   <th className="px-5 py-3 font-semibold">Technician</th>
                   <th className="px-5 py-3 font-semibold">Status</th>
                   <th className="px-5 py-3 font-semibold">Priority</th>
-                  <th className="px-5 py-3 font-semibold">Action</th>
+                  <th className="px-5 py-3 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -385,6 +415,20 @@ export function JobsWorkflow({
                           href={`/jobs/${job.id}/execute`}
                         >
                           Execute
+                        </Link>
+                        <Link
+                          className="ml-2 inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          href={`/reports/new/service?jobId=${encodeURIComponent(
+                            job.id,
+                          )}`}
+                        >
+                          Report
+                        </Link>
+                        <Link
+                          className="ml-2 inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          href={`/quotes/new?jobId=${encodeURIComponent(job.id)}`}
+                        >
+                          Quote
                         </Link>
                       </td>
                     </tr>

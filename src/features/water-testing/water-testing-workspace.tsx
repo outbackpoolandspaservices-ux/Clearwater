@@ -40,12 +40,14 @@ type TechnicianRecord = {
 
 export function WaterTestingWorkspace({
   customers,
+  initialStatus,
   pools,
   sites,
   technicians,
   waterTests,
 }: {
   customers: CustomerRecord[];
+  initialStatus?: string;
   pools: PoolRecord[];
   sites: SiteRecord[];
   technicians: TechnicianRecord[];
@@ -53,7 +55,9 @@ export function WaterTestingWorkspace({
 }) {
   const [customer, setCustomer] = useState(allValue);
   const [technician, setTechnician] = useState(allValue);
-  const [alertStatus, setAlertStatus] = useState(allValue);
+  const [alertStatus, setAlertStatus] = useState(
+    initialStatus === "alert" ? "alert" : allValue,
+  );
   const [date, setDate] = useState("");
 
   const filteredTests = useMemo(() => {
@@ -61,7 +65,10 @@ export function WaterTestingWorkspace({
       return (
         (customer === allValue || test.customerId === customer) &&
         (technician === allValue || test.technicianId === technician) &&
-        (alertStatus === allValue || test.alertStatus === alertStatus) &&
+        (alertStatus === allValue ||
+          (alertStatus === "alert"
+            ? test.alerts.length > 0 || test.alertStatus !== "Balanced"
+            : test.alertStatus === alertStatus)) &&
         (!date || test.date === date)
       );
     });
@@ -108,6 +115,7 @@ export function WaterTestingWorkspace({
             value={alertStatus}
           >
             <option value={allValue}>All alert statuses</option>
+            <option value="alert">Alerts only</option>
             {alertOptions.map((item) => (
               <option key={item} value={item}>
                 {item}

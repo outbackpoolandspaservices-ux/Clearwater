@@ -43,9 +43,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         technicians={technicians}
         initialFilters={{
           date: firstParam(params.date),
+          followUp: firstParam(params.followUp),
           scheduled: firstParam(params.scheduled),
           status: firstParam(params.status),
           technician: firstParam(params.technician),
+          type: firstParam(params.type),
         }}
       />
     </SectionPage>

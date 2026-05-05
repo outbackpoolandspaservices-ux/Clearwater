@@ -3,7 +3,11 @@ import Link from "next/link";
 import { SectionPage } from "@/components/app-shell/section-page";
 import { SearchFilterBar } from "@/components/ui/search-filter-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getCustomers } from "@/features/customers/data/customers";
+import { getJobsWithSource } from "@/features/jobs/data/jobs";
 import { getPoolsWithSource } from "@/features/pools/data/pools";
+import { getSites } from "@/features/properties/data/sites";
+import { getWaterTestsWithSource } from "@/features/water-testing/data/water-tests";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -11,7 +15,15 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function PoolsPage() {
-  const { pools } = await getPoolsWithSource();
+  const [customers, jobsResult, poolsResult, sites, testsResult] =
+    await Promise.all([
+      getCustomers(),
+      getJobsWithSource(),
+      getPoolsWithSource(),
+      getSites(),
+      getWaterTestsWithSource(),
+    ]);
+  const { pools } = poolsResult;
 
   return (
     <SectionPage
@@ -50,6 +62,24 @@ export default async function PoolsPage() {
             </div>
             <dl className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Customer</dt>
+                <dd className="text-right font-medium text-slate-900">
+                  {customers.find(
+                    (customer) =>
+                      customer.id ===
+                      sites.find((site) => site.id === pool.siteId)?.customerId,
+                  )?.name ?? "Not linked"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Property/Site</dt>
+                <dd className="text-right font-medium text-slate-900">
+                  {sites.find((site) => site.id === pool.siteId)?.address ??
+                    pool.location ??
+                    "Not recorded"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Volume</dt>
                 <dd className="font-medium text-slate-900">
                   {pool.volumeLitres.toLocaleString("en-AU")} L
@@ -70,7 +100,18 @@ export default async function PoolsPage() {
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Last test</dt>
                 <dd className="font-medium text-slate-900">
-                  {pool.lastTestDate || "No tests yet"}
+                  {testsResult.waterTests.find((test) => test.poolId === pool.id)
+                    ?.date ??
+                    pool.lastTestDate ??
+                    "No tests yet"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-slate-500">Next job</dt>
+                <dd className="text-right font-medium text-slate-900">
+                  {jobsResult.jobs.find(
+                    (job) => job.poolId === pool.id && job.status !== "Completed",
+                  )?.scheduledDate ?? "Not scheduled"}
                 </dd>
               </div>
             </dl>
