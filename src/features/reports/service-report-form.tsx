@@ -90,6 +90,7 @@ export function ServiceReportForm({
       <input name="poolId" type="hidden" value={job.poolId} />
       <input name="jobId" type="hidden" value={job.id} />
       <input name="waterTestId" type="hidden" value={waterTest?.id ?? ""} />
+      <input name="technicianId" type="hidden" value={job.technicianId} />
 
       {state.formError ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800">

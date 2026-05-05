@@ -90,6 +90,7 @@ export async function createServiceReportAction(
   const poolId = getString(formData, "poolId");
   const jobId = getString(formData, "jobId");
   const waterTestId = getString(formData, "waterTestId");
+  const technicianId = getString(formData, "technicianId");
   const status = getString(formData, "status");
   const customerSummary = getString(formData, "customerSummary");
   const workCompleted = getString(formData, "workCompleted");
@@ -159,13 +160,6 @@ export async function createServiceReportAction(
       ? await getDefaultOrganisationId(client)
       : null;
 
-    if (columns.has("organisation_id") && !organisationId) {
-      return {
-        formError:
-          "The reports table needs an organisation record before reports can be created. Please run the protected database setup route, then try again.",
-      };
-    }
-
     const reportNumber = `SR-${Date.now().toString().slice(-6)}`;
     const findings = [
       workCompleted,
@@ -177,21 +171,38 @@ export async function createServiceReportAction(
     ]
       .filter(Boolean)
       .join("\n\n");
-    const candidateValues: Record<string, Date | string | null> = {
+    const metadata = {
+      followUpRequired,
+      internalNotes,
+      nextServiceRecommendation,
+      source: "service-report-foundation",
+    };
+    const candidateValues: Record<string, boolean | Date | string | null> = {
       organisation_id: organisationId,
       customer_id: customerId,
       site_id: siteId || null,
+      property_id: siteId || null,
       pool_id: poolId || null,
       job_id: jobId || null,
       water_test_id: waterTestId || null,
+      technician_id: technicianId || null,
       report_number: reportNumber,
       report_type: "service_report",
       status: reportStatusToDatabase[status] ?? "draft",
+      report_date: new Date(),
+      customer_summary: customerSummary,
+      work_completed: workCompleted,
       summary: customerSummary,
       findings,
       recommendations:
         recommendations || nextServiceRecommendation || "No recommendations.",
+      follow_up_required: followUpRequired === "yes",
+      next_service_recommendation: nextServiceRecommendation || null,
+      internal_notes: internalNotes || null,
+      notes: findings || null,
+      metadata: JSON.stringify(metadata),
       created_at: new Date(),
+      updated_at: new Date(),
     };
     const insertColumns = Object.keys(candidateValues).filter((column) =>
       columns.has(column),

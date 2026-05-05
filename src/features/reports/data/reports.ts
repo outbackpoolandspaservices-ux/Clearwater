@@ -15,18 +15,28 @@ export type ReportsLoadResult = {
 type DatabaseReportRow = {
   id: string;
   created_at?: Date | string | null;
+  customer_summary?: string | null;
   customer_id?: string | null;
   findings?: string | null;
+  follow_up_required?: boolean | null;
+  internal_notes?: string | null;
   job_id?: string | null;
+  metadata?: Record<string, unknown> | string | null;
+  next_service_recommendation?: string | null;
+  notes?: string | null;
   pool_id?: string | null;
+  property_id?: string | null;
   recommendations?: string | null;
+  report_date?: Date | string | null;
   report_number?: string | null;
   report_type?: string | null;
   sent_at?: Date | string | null;
   site_id?: string | null;
   status?: string | null;
   summary?: string | null;
+  technician_id?: string | null;
   water_test_id?: string | null;
+  work_completed?: string | null;
 };
 
 function quoteIdentifier(identifier: string) {
@@ -108,8 +118,15 @@ function statusLabel(value?: string | null) {
 }
 
 function mapDatabaseReport(report: DatabaseReportRow): ReportRecord {
-  const summary = report.summary ?? "Service report summary not recorded yet.";
-  const findings = report.findings ?? "Work completed details not recorded yet.";
+  const summary =
+    report.customer_summary ??
+    report.summary ??
+    "Service report summary not recorded yet.";
+  const findings =
+    report.work_completed ??
+    report.findings ??
+    report.notes ??
+    "Work completed details not recorded yet.";
   const recommendations =
     report.recommendations ?? "No recommendations recorded.";
 
@@ -119,13 +136,13 @@ function mapDatabaseReport(report: DatabaseReportRow): ReportRecord {
       report.report_number ?? `SR-${report.id.slice(0, 8).toUpperCase()}`,
     reportType: reportTypeLabel(report.report_type),
     customerId: report.customer_id ?? "",
-    siteId: report.site_id ?? "",
+    siteId: report.site_id ?? report.property_id ?? "",
     poolId: report.pool_id ?? "",
     jobId: report.job_id ?? "",
-    technicianId: "",
+    technicianId: report.technician_id ?? "",
     waterTestId: report.water_test_id ?? "",
     equipmentIds: [],
-    reportDate: formatDate(report.created_at),
+    reportDate: formatDate(report.report_date ?? report.created_at),
     status: statusLabel(report.status),
     sentStatus: report.sent_at ? "Sent to customer" : "Not sent",
     workCompleted: findings,
@@ -134,7 +151,9 @@ function mapDatabaseReport(report: DatabaseReportRow): ReportRecord {
     recommendations,
     summaryOfFindings: summary,
     customerSummary: summary,
-    nextService: "Next service recommendation placeholder.",
+    nextService:
+      report.next_service_recommendation ??
+      "Next service recommendation placeholder.",
     photoSummary: "Before, after, equipment, and completion photos placeholder.",
   };
 }
@@ -161,15 +180,25 @@ async function getReportsFromDatabase(): Promise<ReportRecord[]> {
       "id",
       "customer_id",
       "site_id",
+      "property_id",
       "pool_id",
       "job_id",
       "water_test_id",
+      "technician_id",
       "report_number",
       "report_type",
       "status",
+      "report_date",
+      "customer_summary",
+      "work_completed",
       "summary",
       "findings",
       "recommendations",
+      "follow_up_required",
+      "next_service_recommendation",
+      "internal_notes",
+      "notes",
+      "metadata",
       "sent_at",
       "created_at",
     ].filter((column) => columns.has(column));
@@ -177,7 +206,7 @@ async function getReportsFromDatabase(): Promise<ReportRecord[]> {
     const rows = await client.unsafe<DatabaseReportRow[]>(
       `select ${readableColumns.map(quoteIdentifier).join(", ")}
        from "reports"
-       order by ${columns.has("created_at") ? '"created_at" desc' : '"id" desc'}`,
+       order by ${columns.has("report_date") ? '"report_date" desc' : columns.has("created_at") ? '"created_at" desc' : '"id" desc'}`,
     );
 
     return rows.map(mapDatabaseReport);
@@ -210,15 +239,25 @@ async function getReportFromDatabaseById(
       "id",
       "customer_id",
       "site_id",
+      "property_id",
       "pool_id",
       "job_id",
       "water_test_id",
+      "technician_id",
       "report_number",
       "report_type",
       "status",
+      "report_date",
+      "customer_summary",
+      "work_completed",
       "summary",
       "findings",
       "recommendations",
+      "follow_up_required",
+      "next_service_recommendation",
+      "internal_notes",
+      "notes",
+      "metadata",
       "sent_at",
       "created_at",
     ].filter((column) => columns.has(column));

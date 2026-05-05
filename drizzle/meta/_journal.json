@@ -15,6 +15,13 @@
       "when": 1777682953789,
       "tag": "0001_friendly_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777923900000,
+      "tag": "0002_add_reports_table",
+      "breakpoints": true
     }
   ]
 }

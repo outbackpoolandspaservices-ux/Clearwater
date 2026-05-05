@@ -110,6 +110,7 @@ The first working app shell includes:
 - Add Water Test saves technician water chemistry readings to PostgreSQL when a database URL is configured. Tests link to pools and optional jobs, with guide ranges displayed during testing rather than stored as pool profile targets.
 - Job Execution and Technician Today foundation reads jobs from PostgreSQL when available, links technicians from the run sheet to `/jobs/[jobId]/execute`, stores checklist/status/chemical-use notes safely on the current `jobs` table, and keeps stock deduction, photos/files, BioGuard dosing automation, and customer reports for later phases.
 - Service Report foundation reads reports from PostgreSQL when available, supports `/reports/new/service?jobId=...`, stores draft service reports in the current `reports` table, and renders customer-facing report previews from linked job, customer, property/site, pool, and water-test data. PDF generation, automatic email sending, photos/files, and AI-generated wording are later phases.
+- Reports database support is included in `drizzle/0002_add_reports_table.sql`. This migration safely creates the `reports` table and report enums when missing, with service-report fields for customer summary, work completed, follow-up, next service recommendation, internal notes, metadata, sent status, and timestamps.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -231,6 +232,7 @@ Database-backed Service Report workflow:
 - Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
 - `/reports` and `/reports/[reportId]` attempt PostgreSQL reads when a database URL is configured and fall back to mock reports if the database is unavailable.
 - The current migrated `reports` table stores linked customer, site, pool, job, water test, report number, type, status, summary, findings, and recommendations.
+- If the deployed database does not have `reports` yet, run `npm run db:migrate` or the protected database setup route after deploying this migration. `/api/admin/database/reports/count` should then return a real count instead of `reports: "missing"`.
 - Rich report details such as checklist summary, chemical-use notes, technician notes, and customer-facing notes are derived from linked job notes for now.
 - PDF download, Send to Customer, Email Report, View Customer Portal, photo/file rendering, and AI-generated wording are placeholders only.
 - `/api/admin/database/reports/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
