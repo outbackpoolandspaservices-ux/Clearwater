@@ -120,7 +120,30 @@ The first working app shell includes:
 - Authentication and role permissions foundation now includes safe current-user helpers, route guard helpers, demo-role configuration, and documented auth enforcement controls. Global login enforcement remains off by default to avoid locking the MVP during Vercel review.
 - Photos and Attachments foundation now supports job attachment metadata categories and `/jobs/[jobId]/attachments/new`. Actual file upload/storage remains a placeholder until a Vercel-compatible storage provider such as Vercel Blob is configured.
 
-ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
+ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. Migrated workflows attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
+
+## MVP Status
+
+Working database-backed workflows:
+
+- Customers, Properties/Sites, Pools
+- Jobs, Technician Today, Job Execution
+- Water Testing with guide ranges
+- Service Reports
+- BioGuard product catalogue and review-required recommendations
+- Stock, van inventory, job chemical usage, and optional stock deduction
+- Quotes and Invoices with draft creation and line items
+- Customer Portal demo views
+- Attachment metadata for job photos/documents
+
+Still placeholders or planned:
+
+- Real authentication enforcement and customer login
+- Real PDF generation and email/SMS sending
+- Xero sync and payment gateway processing
+- Real file upload/storage
+- Full BioGuard dosing automation and stock/accounting reconciliation
+- Routing provider connection and mobile/offline app packaging
 
 ## Getting Started
 

@@ -11,7 +11,7 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function CustomersPage() {
-  const { count, customers, source } = await getCustomersWithSource();
+  const { customers } = await getCustomersWithSource();
 
   return (
     <SectionPage
@@ -25,16 +25,6 @@ export default async function CustomersPage() {
         filterOptions={["Residential", "Commercial", "Real estate"]}
         searchPlaceholder="Search customers by name, phone, or email"
       />
-
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-        <span className="font-semibold text-slate-950">Data source:</span>{" "}
-        {source}
-        <span className="mx-2 text-slate-300">|</span>
-        <span className="font-semibold text-slate-950">
-          Customer records loaded:
-        </span>{" "}
-        {count}
-      </div>
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="overflow-x-auto">

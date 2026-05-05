@@ -18,23 +18,13 @@ export default async function WaterTestingPage() {
     getSites(),
     getWaterTestsWithSource(),
   ]);
-  const { count, source, waterTests } = waterTestsResult;
+  const { waterTests } = waterTestsResult;
 
   return (
     <SectionPage
       title="Water Testing"
       description="Water chemistry readings, target ranges, dosing notes, visit history, and trend reporting for each pool."
     >
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-        <span className="font-semibold text-slate-950">Data source:</span>{" "}
-        {source}
-        <span className="mx-2 text-slate-300">|</span>
-        <span className="font-semibold text-slate-950">
-          Water test records loaded:
-        </span>{" "}
-        {count}
-      </div>
-
       <WaterTestingWorkspace
         customers={customers}
         pools={pools}

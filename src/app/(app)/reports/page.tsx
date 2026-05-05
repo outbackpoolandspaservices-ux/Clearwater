@@ -12,7 +12,7 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function ReportsPage() {
-  const [{ count, reports, source }, customers, jobs, sites] = await Promise.all([
+  const [{ reports }, customers, jobs, sites] = await Promise.all([
     getReportsWithSource(),
     getCustomers(),
     getJobs(),
@@ -24,14 +24,6 @@ export default async function ReportsPage() {
       title="Reports"
       description="Operational and financial reports for job throughput, technician capacity, chemical usage, stock, and revenue."
     >
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-        <span className="font-semibold text-slate-900">Data source:</span>{" "}
-        {source} <span className="mx-2 text-slate-300">|</span>
-        <span className="font-semibold text-slate-900">
-          Report records loaded:
-        </span>{" "}
-        {count}
-      </div>
       <ReportsWorkspace
         customers={customers}
         jobs={jobs}

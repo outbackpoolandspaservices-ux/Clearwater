@@ -41,7 +41,7 @@ function sortByRunOrder(a: JobRecord, b: JobRecord) {
 }
 
 export default async function TechnicianTodayPage() {
-  const [{ jobs, source }, customers, pools, sites] = await Promise.all([
+  const [{ jobs }, customers, pools, sites] = await Promise.all([
     getJobsWithSource(),
     getCustomers(),
     getPools(),
@@ -64,14 +64,6 @@ export default async function TechnicianTodayPage() {
       title="Technician Today"
       description="Mobile-friendly run sheet for assigned jobs, access notes, pool context, navigation, and job execution."
     >
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
-        <span className="font-semibold text-slate-900">Data source:</span>{" "}
-        {source}{" "}
-        <span className="mx-2 text-slate-300">|</span>
-        <span className="font-semibold text-slate-900">Jobs loaded:</span>{" "}
-        {visibleJobs.length}
-      </div>
-
       <section className="rounded-xl border border-cyan-200 bg-cyan-50 p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

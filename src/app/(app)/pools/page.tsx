@@ -11,7 +11,7 @@ export const revalidate = 0;
 export const runtime = "nodejs";
 
 export default async function PoolsPage() {
-  const { count, pools, source } = await getPoolsWithSource();
+  const { pools } = await getPoolsWithSource();
 
   return (
     <SectionPage
@@ -25,16 +25,6 @@ export default async function PoolsPage() {
         filterOptions={["Balanced", "Phosphate alert", "Monitor alkalinity", "pH high"]}
         searchPlaceholder="Search pools by name, location, surface, or sanitiser"
       />
-
-      <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-        <span className="font-semibold text-slate-950">Data source:</span>{" "}
-        {source}
-        <span className="mx-2 text-slate-300">|</span>
-        <span className="font-semibold text-slate-950">
-          Pool records loaded:
-        </span>{" "}
-        {count}
-      </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {pools.map((pool) => (
