@@ -118,6 +118,7 @@ The first working app shell includes:
 - Quotes and Invoices database workflow is included in `drizzle/0006_quotes_invoices_workflow.sql`. `/quotes`, `/quotes/new`, `/quotes/[quoteId]`, `/invoices`, `/invoices/new`, and `/invoices/[invoiceId]` now read/write PostgreSQL where available with mock fallback. Xero sync, payment gateway collection, quote approval, and conversion actions remain placeholders.
 - Customer Portal database workflow now reads from the same PostgreSQL-backed Customers, Properties/Sites, Pools, Jobs, Water Testing, Reports, Quotes, Invoices, and Payments data layers with mock fallback. It remains a safe demo portal without real authentication until the auth phase.
 - Authentication and role permissions foundation now includes safe current-user helpers, route guard helpers, demo-role configuration, and documented auth enforcement controls. Global login enforcement remains off by default to avoid locking the MVP during Vercel review.
+- Photos and Attachments foundation now supports job attachment metadata categories and `/jobs/[jobId]/attachments/new`. Actual file upload/storage remains a placeholder until a Vercel-compatible storage provider such as Vercel Blob is configured.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. The migrated Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician execution, and Service Report slices attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -305,6 +306,14 @@ Authentication and role permissions foundation:
 - `src/lib/auth/current-user.ts` and `src/lib/auth/guards.ts` provide safe session/demo user helpers for future route protection.
 - Keep `CLEARWATER_ENFORCE_AUTH="false"` until a real provider and seeded users are tested.
 - Use `CLEARWATER_DEMO_ROLE` to test owner/admin/dispatcher/technician/finance/customer permission behaviour without locking yourself out.
+
+Photos and attachments foundation:
+
+- Open a job detail page and choose Add Photo / Attachment Metadata.
+- Categories include before, after, equipment, issue/damage, safety concern, water condition, and completed work.
+- Metadata saves to the existing `attachments` table when available. The storage key is marked as a pending upload placeholder.
+- `/api/admin/database/attachments/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+- Set `BLOB_READ_WRITE_TOKEN` later when real Vercel Blob uploads are implemented.
 
 Database-backed Water Testing workflow:
 

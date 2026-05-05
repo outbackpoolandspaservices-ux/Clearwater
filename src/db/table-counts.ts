@@ -20,6 +20,7 @@ export const setupCountTables = [
   "invoices",
   "invoice_line_items",
   "payments",
+  "attachments",
 ] as const;
 
 export type SetupTableCountValue = number | "missing";

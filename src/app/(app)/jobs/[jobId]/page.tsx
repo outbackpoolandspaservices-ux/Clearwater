@@ -5,6 +5,7 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getAttachmentsForJob } from "@/features/attachments/data/attachments";
 import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getCustomerById } from "@/features/customers/data/customers";
 import { getJobChemicalUsage } from "@/features/jobs/data/chemical-usage";
@@ -86,12 +87,13 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     notFound();
   }
 
-  const [customer, pool, site, products, jobUsage] = await Promise.all([
+  const [customer, pool, site, products, jobUsage, attachments] = await Promise.all([
     getCustomerById(job.customerId),
     job.poolId ? getPoolById(job.poolId) : Promise.resolve(undefined),
     getSiteById(job.siteId),
     getChemicalProducts(),
     getJobChemicalUsage(job.id),
+    getAttachmentsForJob(job.id),
   ]);
   const technician = getTechnicianById(job.technicianId);
   const linkedEquipment = pool ? getEquipmentForPool(pool.id) : [];
@@ -387,10 +389,37 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <DetailCard title="Photos">
-          <EmptyState
-            description="Before, after, equipment, damage, and completion photos will be uploaded here in a later workflow."
-            title="Photo placeholders"
-          />
+          {attachments.length > 0 ? (
+            <div className="space-y-3">
+              {attachments.map((attachment) => (
+                <div
+                  className="rounded-md border border-slate-200 p-4 text-sm"
+                  key={attachment.id}
+                >
+                  <p className="font-semibold text-slate-950">
+                    {attachment.label}
+                  </p>
+                  <p className="mt-1 text-slate-600">
+                    {attachment.category} | {attachment.contentType}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {attachment.storageKey}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              description="Before, after, equipment, issue, safety concern, water condition, and completion photos will appear here after upload metadata is saved."
+              title="No attachments yet"
+            />
+          )}
+          <Link
+            className="mt-4 inline-flex min-h-10 items-center rounded-md border border-cyan-200 px-4 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+            href={`/jobs/${job.id}/attachments/new`}
+          >
+            Add Photo / Attachment Metadata
+          </Link>
         </DetailCard>
 
         <DetailCard title="Quote and invoice summary">

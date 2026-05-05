@@ -139,6 +139,14 @@ The next workflow is Authentication and Role Permissions foundation:
 - Safety: `CLEARWATER_ENFORCE_AUTH` stays `false` by default. The helpers return a demo user when auth is not enforced so Vercel review and Codex development are not locked out.
 - Boundary: no global middleware enforcement yet. Real provider selection, seeded user login, customer portal sessions, and layout-level route protection remain later phases.
 
+The next workflow is Photos and Attachments foundation:
+
+- Routes: `/jobs/[jobId]` and `/jobs/[jobId]/attachments/new`
+- Scope: attachment metadata, photo/document categories, job linkage, protected count endpoint, and storage-provider setup placeholder.
+- Data source: `src/features/attachments/data/attachments.ts` reads the existing `attachments` table when available and returns an empty safe fallback when unavailable.
+- Save path: server action in `src/features/attachments/actions.ts`
+- Boundary: this does not upload binary files yet. Real Vercel Blob/local storage upload, thumbnails, customer-visible photo filtering, and report photo rendering are later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
