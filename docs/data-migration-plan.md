@@ -80,13 +80,22 @@ The next database-backed workflow is Service Report foundation:
 - Safety: inserts only columns that exist in the current `reports` table. Richer service report fields are stored in summary, findings, and recommendations until dedicated report sections, attachments, and delivery tables are connected.
 - Boundary: this is a preview and draft workflow only. Real PDF generation, automatic email/SMS sending, photo/file rendering, customer portal delivery, and AI-generated wording remain separate phases.
 
+The next database-backed workflow is BioGuard Product Intelligence foundation:
+
+- Routes: `/chemicals` and `/chemicals/[chemicalId]`
+- Scope: BioGuard/Dryden Aqua product register, product detail pages, category/subcategory fields, active/strength notes, purpose, suitable pool conditions, application notes, safety notes, related water issues, compatible pool/sanitiser types, and guidance notes.
+- Data source: `src/features/chemicals/data/chemicals.ts` reads PostgreSQL from `chemical_products` when available and falls back to seeded/mock product records.
+- Migration: `drizzle/0003_bioguard_product_intelligence.sql` safely creates or expands `chemical_products`.
+- Seed: BioGuard product records seed idempotently from `src/features/chemicals/data/bioguard-products.ts`.
+- Boundary: this is product intelligence only. Exact dosing automation, stock deduction, automatic customer-facing advice, and AI interpretation remain later phases.
+
 ## Current Behaviour
 
 The UI still uses mock fallback data when a database URL is missing or a scoped database query fails.
 
 `CLEARWATER_DATA_SOURCE` defaults to `mock`. Even when the schema exists, pages should keep working without a local PostgreSQL database.
 
-Customer, property/site, pool, job, water test creation, job execution updates, and service report creation can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, and Reports now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
+Customer, property/site, pool, job, water test creation, job execution updates, service report creation, and BioGuard product seed data can save to PostgreSQL while `CLEARWATER_DATA_SOURCE` remains `mock`. Customers, Properties/Sites, Pools, Jobs, Water Testing, Technician Today, Reports, and Chemicals now attempt scoped PostgreSQL reads when a database URL is configured and fall back to mock records if those reads fail.
 
 ## Database-Ready Shape
 
@@ -106,6 +115,8 @@ The data functions are async and are structured so future work can replace the d
 - `getWaterTestById()`
 - `getReports()`
 - `getReportById()`
+- `getChemicalProducts()`
+- `getChemicalProductById()`
 
 ## Future Steps
 

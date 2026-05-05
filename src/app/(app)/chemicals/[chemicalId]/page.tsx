@@ -5,8 +5,8 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getChemicalProductById } from "@/features/chemicals/data/chemicals";
 import {
-  getBioGuardProductById,
   getCustomerById,
   getJobById,
   getStockEntriesForProduct,
@@ -26,11 +26,16 @@ function stockTone(status: string) {
   return "success" as const;
 }
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+export const runtime = "nodejs";
+
 export default async function ChemicalDetailPage({
   params,
 }: ChemicalDetailPageProps) {
   const { chemicalId } = await params;
-  const product = getBioGuardProductById(chemicalId);
+  const product = await getChemicalProductById(chemicalId);
 
   if (!product) {
     notFound();
@@ -42,7 +47,7 @@ export default async function ChemicalDetailPage({
   return (
     <SectionPage
       title={product.name}
-      description="Mock BioGuard Australia product detail for dosing context, safety handling, van stock, and recent job usage."
+      description="BioGuard product intelligence foundation for technician review, safety handling, van stock, and recent job usage."
     >
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge tone="success">{product.status}</StatusBadge>
@@ -56,9 +61,10 @@ export default async function ChemicalDetailPage({
             items={[
               { label: "Brand", value: product.brand },
               { label: "Category", value: product.category },
+              { label: "Subcategory", value: product.subcategory },
               { label: "Purpose", value: product.purpose },
               { label: "Unit type", value: product.unitType },
-              { label: "Product strength", value: product.productStrength },
+              { label: "Active / strength", value: product.activeIngredient },
               { label: "Status", value: product.status },
             ]}
           />
@@ -69,8 +75,9 @@ export default async function ChemicalDetailPage({
             {product.dosingNotes}
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Dosing is mock/planned only and will later use pool volume, target
-            ranges, measured readings, and reviewed product rules.
+            Product recommendations are guidance only. Dosing automation will
+            later use pool volume, readings, equipment context, and reviewed
+            product rules.
           </p>
         </DetailCard>
       </section>
@@ -84,7 +91,7 @@ export default async function ChemicalDetailPage({
 
         <DetailCard title="Safety and handling">
           <p className="text-sm leading-6 text-slate-700">
-            {product.handlingNote}
+            {product.safetyNotes}
           </p>
         </DetailCard>
       </section>
@@ -92,19 +99,42 @@ export default async function ChemicalDetailPage({
       <section className="grid gap-4 xl:grid-cols-2">
         <DetailCard title="Related water issues">
           <div className="flex flex-wrap gap-2">
-            {product.relatedWaterIssues.map((issue) => (
-              <StatusBadge key={issue}>{issue}</StatusBadge>
-            ))}
+            {product.relatedWaterIssues.length > 0 ? (
+              product.relatedWaterIssues.map((issue) => (
+                <StatusBadge key={issue}>{issue}</StatusBadge>
+              ))
+            ) : (
+              <StatusBadge>No issues configured</StatusBadge>
+            )}
           </div>
         </DetailCard>
 
-        <DetailCard title="Alternative products placeholder">
-          <EmptyState
-            description="Alternative products and substitution rules will be added when the chemical intelligence model is expanded."
-            title="No alternatives configured yet"
-          />
+        <DetailCard title="Pool compatibility">
+          <div className="flex flex-wrap gap-2">
+            {product.compatiblePoolTypes.length > 0 ? (
+              product.compatiblePoolTypes.map((item) => (
+                <StatusBadge key={item}>{item}</StatusBadge>
+              ))
+            ) : (
+              <StatusBadge>Technician review required</StatusBadge>
+            )}
+          </div>
         </DetailCard>
       </section>
+
+      <DetailCard title="Product intelligence notes">
+        <DetailList
+          items={[
+            {
+              label: "Suitable conditions",
+              value:
+                product.suitablePoolConditions.join(", ") ||
+                "Technician review required",
+            },
+            { label: "Notes", value: product.notes },
+          ]}
+        />
+      </DetailCard>
 
       <DetailCard title="Linked van stock">
         {stockEntries.length > 0 ? (

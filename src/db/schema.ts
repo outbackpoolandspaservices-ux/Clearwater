@@ -500,11 +500,13 @@ export const waterTests = pgTable("water_tests", {
 });
 
 export const chemicalProducts = pgTable("chemical_products", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   organisationId: uuid("organisation_id").references(() => organisations.id),
   name: text("name").notNull(),
   brand: text("brand").notNull().default("BioGuard Australia"),
   category: text("category").notNull(),
+  subcategory: text("subcategory"),
+  activeIngredient: text("active_ingredient"),
   purpose: text("purpose"),
   unitType: text("unit_type").notNull(),
   productStrength: text("product_strength"),
@@ -512,7 +514,13 @@ export const chemicalProducts = pgTable("chemical_products", {
   applicationMethod: text("application_method"),
   safetyNotes: text("safety_notes"),
   relatedWaterIssues: jsonb("related_water_issues").$type<string[]>(),
+  suitablePoolConditions: jsonb("suitable_pool_conditions").$type<string[]>(),
+  compatiblePoolTypes: jsonb("compatible_pool_types").$type<string[]>(),
+  notes: text("notes"),
+  status: text("status").notNull().default("Active"),
   isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
 
 export const stock = pgTable("stock", {

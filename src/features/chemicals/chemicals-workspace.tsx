@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { bioGuardProducts } from "@/lib/mock-data";
+import type { ChemicalProductRecord } from "@/features/chemicals/data/chemicals";
 
 const allValue = "all";
 
@@ -19,14 +19,18 @@ function productTone(status: string) {
   return "neutral" as const;
 }
 
-export function ChemicalsWorkspace() {
+export function ChemicalsWorkspace({
+  products,
+}: {
+  products: ChemicalProductRecord[];
+}) {
   const [brand, setBrand] = useState(allValue);
   const [category, setCategory] = useState(allValue);
   const [purpose, setPurpose] = useState(allValue);
   const [status, setStatus] = useState(allValue);
 
   const filteredProducts = useMemo(() => {
-    return bioGuardProducts.filter((product) => {
+    return products.filter((product) => {
       return (
         (brand === allValue || product.brand === brand) &&
         (category === allValue || product.category === category) &&
@@ -34,7 +38,7 @@ export function ChemicalsWorkspace() {
         (status === allValue || product.status === status)
       );
     });
-  }, [brand, category, purpose, status]);
+  }, [brand, category, products, purpose, status]);
 
   return (
     <div className="space-y-6">
@@ -46,7 +50,7 @@ export function ChemicalsWorkspace() {
             value={brand}
           >
             <option value={allValue}>All brands</option>
-            {unique(bioGuardProducts.map((product) => product.brand)).map(
+            {unique(products.map((product) => product.brand)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}
@@ -60,7 +64,7 @@ export function ChemicalsWorkspace() {
             value={category}
           >
             <option value={allValue}>All categories</option>
-            {unique(bioGuardProducts.map((product) => product.category)).map(
+            {unique(products.map((product) => product.category)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}
@@ -74,7 +78,7 @@ export function ChemicalsWorkspace() {
             value={purpose}
           >
             <option value={allValue}>All purposes</option>
-            {unique(bioGuardProducts.map((product) => product.purpose)).map(
+            {unique(products.map((product) => product.purpose)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}
@@ -88,7 +92,7 @@ export function ChemicalsWorkspace() {
             value={status}
           >
             <option value={allValue}>All statuses</option>
-            {unique(bioGuardProducts.map((product) => product.status)).map(
+            {unique(products.map((product) => product.status)).map(
               (item) => (
                 <option key={item} value={item}>
                   {item}

@@ -1,5 +1,7 @@
 import type postgres from "postgres";
 
+import { bioGuardProductSeeds } from "@/features/chemicals/data/bioguard-products";
+
 import { customerSeeds } from "./customers";
 import { equipmentSeeds } from "./equipment";
 import { organisationSeed } from "./organisation";
@@ -221,6 +223,30 @@ function equipmentRows(): SeedRow[] {
   }));
 }
 
+function chemicalProductRows(): SeedRow[] {
+  return bioGuardProductSeeds.map((product) => ({
+    id: product.id,
+    organisation_id: organisationSeed.id,
+    name: product.name,
+    brand: product.brand,
+    category: product.category,
+    subcategory: product.subcategory,
+    active_ingredient: product.activeIngredient,
+    purpose: product.purpose,
+    unit_type: product.unitType,
+    product_strength: product.activeIngredient,
+    dosing_notes: "Guidance only. Exact dosing automation will be added later.",
+    application_method: product.applicationMethod,
+    safety_notes: product.safetyNotes,
+    related_water_issues: JSON.stringify(product.relatedWaterIssues),
+    suitable_pool_conditions: JSON.stringify(product.suitablePoolConditions),
+    compatible_pool_types: JSON.stringify(product.compatiblePoolTypes),
+    notes: product.notes,
+    status: product.status,
+    is_active: product.status !== "Inactive",
+  }));
+}
+
 export async function seedInitialClearWaterData(client: postgres.Sql) {
   await upsertSeedRows(client, "organisations", organisationRows());
   await upsertSeedRows(client, "users", userRows());
@@ -235,4 +261,5 @@ export async function seedInitialClearWaterData(client: postgres.Sql) {
   await upsertSeedRows(client, "properties", siteRows());
   await upsertSeedRows(client, "pools", poolRows());
   await upsertSeedRows(client, "equipment", equipmentRows());
+  await upsertSeedRows(client, "chemical_products", chemicalProductRows());
 }
