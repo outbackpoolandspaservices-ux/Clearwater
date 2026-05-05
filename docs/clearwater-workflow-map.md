@@ -23,8 +23,12 @@ ClearWater is organised around the real pool-service workflow for Outback Pool &
 1. Customer stores billing and primary contact details.
 2. Property/Site stores service address, access, gate, tenant/owner/agent, and maps context.
 3. Pool stores pool profile, environment, construction, sanitiser/filter/cleaner context, and service notes.
-4. Water tests link to pools and jobs.
-5. Equipment and attachments link into the pool/job/report workflow as the MVP matures.
+4. Equipment Register stores equipment that has been sold, installed, serviced, replaced, or recorded for warranty/history purposes.
+5. Equipment Register is separate from Stock: Stock is business/van inventory; Equipment Register is customer/property/pool-linked equipment history.
+6. Equipment records link to customer, property/site, pool, optional job, quote, invoice, and future service report history.
+7. Warranty status is calculated from installed date when available, otherwise purchase date, plus warranty period. Active shows green, expiring soon within 60 days shows amber/orange, expired shows red, and missing warranty details show grey.
+8. Installation Photos / Warranty Evidence records the required checklist for before/after photos, serial/model plates, proof of purchase, warranty cards/manuals, installation notes, and future supplier warranty claim packs. Real storage upload is a later phase.
+9. Water tests link to pools and jobs.
 
 ## Water Care Flow
 
@@ -38,7 +42,8 @@ ClearWater is organised around the real pool-service workflow for Outback Pool &
 1. Quote can link to customer, property/site, pool, and job.
 2. Accepted quote can later become a job or invoice.
 3. Completed job can later become an invoice draft.
-4. Xero, payment gateway, email, SMS, and PDF generation remain planned integrations.
+4. Equipment items can later flow from quotes/invoices into Equipment Register after sale/installation review.
+5. Xero, payment gateway, email, SMS, and PDF generation remain planned integrations.
 
 ## Customer Portal Flow
 

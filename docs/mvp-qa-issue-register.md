@@ -47,6 +47,7 @@ Status values:
 | QA-M005 | Water Testing / Chemicals | Exact BioGuard dosing rules are not implemented. | Medium | Deferred | Current recommendations are review-required category/product guidance only. | 2026-05-05 |  |  |
 | QA-M006 | Water Testing | LaMotte SpinTouch import/sync is not implemented. | Medium | Deferred | Manual entry and structure exist. | 2026-05-05 |  |  |
 | QA-M007 | Routing | Routing provider integration is not implemented. | Medium | Deferred | Routing UI and provider boundary are foundation only. | 2026-05-05 |  |  |
+| QA-M008 | Equipment Register | Real warranty evidence file upload, serial scanning, reminders, and supplier claim packs are not implemented. | Medium | Deferred | Equipment Register stores the record and checklist foundation; storage/reminders/claim packs are future phases. | 2026-05-05 |  |  |
 
 ## Low Priority Polish
 
@@ -110,6 +111,19 @@ Use this checklist after each major deployment.
 - [ ] Property/site search works by customer, address, phone, email, and notes.
 - [ ] Pool type and shape dropdowns are practical.
 - [ ] Pool profile does not ask for fixed chemistry targets.
+- [ ] Pool detail shows concise linked Equipment Register records where available.
+
+### Equipment Register
+
+- [ ] `/equipment` loads.
+- [ ] `/equipment/new` loads.
+- [ ] `/equipment/[equipmentId]` loads for an existing equipment record.
+- [ ] Equipment Register appears under Pool Data, not only under Pools or Stock.
+- [ ] Equipment list search works by customer, address, pool, brand, model, serial number, equipment type, and notes.
+- [ ] Filters work for equipment type, brand, calculated warranty status, record type, and manual equipment status.
+- [ ] Warranty status colours are clear: green active, amber/orange expiring soon, red expired, grey unknown.
+- [ ] Add Equipment allows existing customer/property/pool selection and manual unlinked customer entry.
+- [ ] Installation Photos / Warranty Evidence clearly says real storage upload is planned.
 
 ### Jobs
 

@@ -8,12 +8,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { getAttachmentsForJob } from "@/features/attachments/data/attachments";
 import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getCustomerById } from "@/features/customers/data/customers";
+import { getEquipmentForPool } from "@/features/equipment/data/equipment";
+import { warrantyTone } from "@/features/equipment/warranty";
 import { getJobChemicalUsage } from "@/features/jobs/data/chemical-usage";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
 import {
-  getEquipmentForPool,
   getJobProfitabilityByJobId,
   getTechnicianById,
   getWaterTestsByIds,
@@ -105,7 +106,7 @@ export default async function JobDetailPage({
     getAttachmentsForJob(job.id),
   ]);
   const technician = getTechnicianById(job.technicianId);
-  const linkedEquipment = pool ? getEquipmentForPool(pool.id) : [];
+  const linkedEquipment = pool ? await getEquipmentForPool(pool.id) : [];
   const linkedWaterTests = getWaterTestsByIds(job.waterTestIds);
   const linkedQuote = quotes.find((quote) => quote.number === job.quoteId);
   const linkedInvoice = invoices.find(
@@ -402,16 +403,27 @@ export default async function JobDetailPage({
           {linkedEquipment.length > 0 ? (
             <div className="space-y-3">
               {linkedEquipment.map((item) => (
-                <div
+                <Link
                   key={item.id}
-                  className="rounded-md border border-slate-200 p-4 text-sm"
+                  className="block rounded-md border border-slate-200 p-4 text-sm hover:border-cyan-300 hover:bg-cyan-50/50"
+                  href={`/equipment/${item.id}`}
                 >
-                  <p className="font-semibold text-slate-950">{item.type}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-950">
+                      {item.displayName}
+                    </p>
+                    <StatusBadge tone={warrantyTone(item.warrantyStatus)}>
+                      {item.warrantyStatus}
+                    </StatusBadge>
+                  </div>
                   <p className="mt-1 text-slate-600">
-                    {item.brand} {item.model}
+                    {item.equipmentType} / {item.brand} {item.model}
                   </p>
-                  <p className="mt-2 text-cyan-700">{item.condition}</p>
-                </div>
+                  <p className="mt-2 text-slate-500">
+                    Equipment installed/replaced on this job, service notes, and
+                    warranty issue flags are planned for the next linking pass.
+                  </p>
+                </Link>
               ))}
             </div>
           ) : (

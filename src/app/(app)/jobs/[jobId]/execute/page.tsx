@@ -5,6 +5,7 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getChemicalProducts } from "@/features/chemicals/data/chemicals";
 import { getCustomerById } from "@/features/customers/data/customers";
+import { getEquipmentForPool } from "@/features/equipment/data/equipment";
 import { JobExecutionForm } from "@/features/jobs/job-execution-form";
 import { getJobById } from "@/features/jobs/data/jobs";
 import { getPoolById } from "@/features/pools/data/pools";
@@ -51,6 +52,7 @@ export default async function JobExecutionPage({
     getStockWithSource(),
   ]);
   const technician = getTechnicianById(job.technicianId);
+  const linkedEquipment = job.poolId ? await getEquipmentForPool(job.poolId) : [];
   const linkedWaterTests = waterTests.filter(
     (test) => test.jobId === job.id || Boolean(job.poolId && test.poolId === job.poolId),
   );
@@ -71,6 +73,26 @@ export default async function JobExecutionPage({
         <StatusBadge tone={priorityTone(job.priority)}>
           {job.priority} priority
         </StatusBadge>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+        <p className="font-semibold text-slate-950">
+          Equipment Register job foundation
+        </p>
+        <p className="mt-1">
+          {linkedEquipment.length} pool equipment record
+          {linkedEquipment.length === 1 ? "" : "s"} available for this job.
+          Future job execution will mark equipment installed/replaced, capture
+          service notes, and flag warranty issues from this workflow.
+        </p>
+        {job.poolId ? (
+          <Link
+            className="mt-3 inline-flex min-h-9 items-center rounded-md border border-cyan-200 px-3 font-semibold text-cyan-700 hover:bg-cyan-50"
+            href={`/equipment/new?poolId=${encodeURIComponent(job.poolId)}`}
+          >
+            Add installed/replaced equipment
+          </Link>
+        ) : null}
       </div>
 
       <JobExecutionForm

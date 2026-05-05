@@ -21,6 +21,7 @@ The MVP should stay practical for a pool service business:
 - Customers can have multiple properties/sites.
 - Properties/sites hold address, access, gate, pet, tenant, owner, and agent context.
 - Pools hold pool profile and service context without storing fixed water chemistry targets.
+- Equipment Register is its own Pool Data workflow for installed/sold/serviced/replaced equipment, serial numbers, warranties, evidence, and service history. It should not be hidden under Stock because Stock is inventory on hand.
 - Jobs link customer, property/site, pool, technician, schedule, checklist, status, notes, and follow-up context.
 - Technician Today and Job Execution support mobile field work.
 - Water Testing captures LaMotte-style readings and shows guide ranges.
@@ -34,6 +35,7 @@ The MVP should stay practical for a pool service business:
 
 - Customer records and multi-site relationships.
 - Pool profiles and equipment planning.
+- Dedicated Equipment Register with customer/property/pool links, warranty status, serial number tracking, and evidence checklist.
 - Service jobs and recurring-service placeholders.
 - Technician workflow and checklist completion.
 - Water testing and chemical usage.
@@ -98,6 +100,7 @@ These workflows should continue to use PostgreSQL when `DATABASE_URL` exists, wi
 10. Quotes.
 11. Invoices.
 12. Attachments foundation.
+13. Equipment Register.
 
 Keep `CLEARWATER_DATA_SOURCE="mock"` and `CLEARWATER_ENFORCE_AUTH="false"` until a later explicit production-readiness phase.
 
@@ -108,3 +111,4 @@ Keep `CLEARWATER_DATA_SOURCE="mock"` and `CLEARWATER_ENFORCE_AUTH="false"` until
 - Customer-facing copy should mention Outback Pool & Spa Services, Alice Springs.
 - Avoid developer wording in user-facing screens.
 - Avoid claiming exact BioGuard dosing, AI decisions, real PDF sending, real payments, or real Xero sync before those integrations exist.
+- Warranty status may be shown as calculated from dates and warranty period, but warranty claims and supplier/customer decisions still require user review.

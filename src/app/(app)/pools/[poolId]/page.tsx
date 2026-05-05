@@ -5,12 +5,11 @@ import { SectionPage } from "@/components/app-shell/section-page";
 import { DetailCard, DetailList } from "@/components/ui/detail-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getEquipmentForPool } from "@/features/equipment/data/equipment";
+import { warrantyTone } from "@/features/equipment/warranty";
 import { getPoolById } from "@/features/pools/data/pools";
 import { getSiteById } from "@/features/properties/data/sites";
-import {
-  getEquipmentForPool,
-  getWaterTestsForPool,
-} from "@/lib/mock-data";
+import { getWaterTestsForPool } from "@/lib/mock-data";
 
 type PoolDetailPageProps = {
   params: Promise<{
@@ -31,8 +30,10 @@ export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
     notFound();
   }
 
-  const site = await getSiteById(pool.siteId);
-  const linkedEquipment = getEquipmentForPool(pool.id);
+  const [site, linkedEquipment] = await Promise.all([
+    getSiteById(pool.siteId),
+    getEquipmentForPool(pool.id),
+  ]);
   const recentTests = getWaterTestsForPool(pool.id);
 
   return (
@@ -84,25 +85,50 @@ export default async function PoolDetailPage({ params }: PoolDetailPageProps) {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <DetailCard title="Linked equipment">
+        <DetailCard title="Equipment Register">
+          <div className="mb-4 flex flex-wrap gap-3">
+            <Link
+              className="inline-flex min-h-9 items-center rounded-md border border-cyan-200 px-3 text-sm font-semibold text-cyan-700 hover:bg-cyan-50"
+              href={`/equipment/new?poolId=${encodeURIComponent(pool.id)}`}
+            >
+              Add Equipment for this pool
+            </Link>
+            <Link
+              className="inline-flex min-h-9 items-center rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              href="/equipment"
+            >
+              View all equipment
+            </Link>
+          </div>
           {linkedEquipment.length > 0 ? (
             <div className="space-y-3">
               {linkedEquipment.map((item) => (
-                <div
+                <Link
                   key={item.id}
-                  className="rounded-md border border-slate-200 p-4 text-sm"
+                  className="block rounded-md border border-slate-200 p-4 text-sm hover:border-cyan-300 hover:bg-cyan-50/50"
+                  href={`/equipment/${item.id}`}
                 >
-                  <p className="font-semibold text-slate-950">{item.type}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-semibold text-slate-950">
+                      {item.displayName}
+                    </p>
+                    <StatusBadge tone={warrantyTone(item.warrantyStatus)}>
+                      {item.warrantyStatus}
+                    </StatusBadge>
+                  </div>
                   <p className="mt-1 text-slate-600">
-                    {item.brand} {item.model}
+                    {item.equipmentType} / {item.brand} {item.model}
                   </p>
-                  <p className="mt-2 text-cyan-700">{item.condition}</p>
-                </div>
+                  <p className="mt-2 text-slate-500">
+                    Serial: {item.serialNumber} | Warranty expiry:{" "}
+                    {item.warrantyExpiryDate ?? "Unknown"}
+                  </p>
+                </Link>
               ))}
             </div>
           ) : (
             <EmptyState
-              description="Equipment records linked to this pool will appear here."
+              description="Equipment linked to this pool will appear here with warranty status and serial/model history."
               title="No equipment linked"
             />
           )}

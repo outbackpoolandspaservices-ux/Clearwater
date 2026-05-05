@@ -120,6 +120,7 @@ The first working app shell includes:
 - Customer Portal database workflow now reads from the same PostgreSQL-backed Customers, Properties/Sites, Pools, Jobs, Water Testing, Reports, Quotes, Invoices, and Payments data layers with mock fallback. It remains a safe demo portal without real authentication until the auth phase.
 - Authentication and role permissions foundation now includes safe current-user helpers, route guard helpers, demo-role configuration, and documented auth enforcement controls. Global login enforcement remains off by default to avoid locking the MVP during Vercel review.
 - Photos and Attachments foundation now supports job attachment metadata categories and `/jobs/[jobId]/attachments/new`. Actual file upload/storage remains a placeholder until a Vercel-compatible storage provider such as Vercel Blob is configured.
+- Equipment Register foundation is now a dedicated Pool Data section at `/equipment`, `/equipment/new`, and `/equipment/[equipmentId]`. It is separate from Stock: Stock tracks what Outback Pool & Spa Services has on hand, while Equipment Register tracks equipment after it has been sold, installed, serviced, replaced, or recorded for customer history, serial number tracking, warranty tracking, future servicing, and supplier warranty claims.
 
 ClearWater still keeps `CLEARWATER_DATA_SOURCE="mock"` as the app-wide safety default. Migrated workflows attempt scoped PostgreSQL reads/writes when a database URL is configured and fall back to mock records safely. Real login is not enforced yet.
 
@@ -136,6 +137,7 @@ Working database-backed workflows:
 - Quotes and Invoices with draft creation and line items
 - Customer Portal demo views
 - Attachment metadata for job photos/documents
+- Equipment Register with warranty status calculation and evidence checklist foundation
 
 Still placeholders or planned:
 
@@ -145,6 +147,7 @@ Still placeholders or planned:
 - Real file upload/storage
 - Full BioGuard dosing automation and stock/accounting reconciliation
 - Routing provider connection and mobile/offline app packaging
+- Equipment photos, receipts, manuals, serial scanning, warranty reminders, supplier claim packs, and customer portal warranty display
 
 ## Getting Started
 
@@ -243,6 +246,23 @@ Database-backed Add Pool:
 - Salt level requirements will come from the selected chlorinator/equipment profile where available in a later equipment integration step.
 - `/pools` and `/pools/[poolId]` read from PostgreSQL when possible and fall back to mock data if the database is unavailable.
 - `/api/admin/database/pools/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+
+Database-backed Equipment Register:
+
+- Open `/equipment` to review the dedicated Equipment Register under Pool Data.
+- Open `/equipment/new` to record equipment that has been sold, installed, serviced, replaced, or captured for warranty/history purposes.
+- Keep `CLEARWATER_DATA_SOURCE="mock"` while testing this workflow.
+- `/equipment` and `/equipment/[equipmentId]` attempt PostgreSQL reads from `equipment` when a database URL is configured and fall back to mock equipment if the database is unavailable.
+- The Equipment Register is separate from Stock. Stock is inventory on hand or in vans; Equipment Register is customer/property/pool-linked equipment history.
+- Equipment records capture display name, equipment type, brand, model, serial number, SKU/supplier code, supplier, purchase date, installed date, warranty period, manual equipment status, record type, sold/cost pricing, labour included, linked quote/invoice/job placeholders, installer, warranty provider, warranty notes, claim notes, internal/customer/service/future maintenance notes, and manual customer/address fallback.
+- Equipment type and brand are dropdowns. Brand uses a starter Australian pool equipment list and supports Other / Unknown with manual entry; it is not a complete brand catalogue.
+- Warranty status is calculated from installed date if available, otherwise purchase date, plus warranty period. Active warranties show green, expiring soon warranties within 60 days show amber/orange, expired warranties show red, and missing warranty details show grey.
+- Warranty expiry is calculated/displayed where possible instead of relying on a manual warranty-status field. Manual equipment status remains separate.
+- Installation Photos / Warranty Evidence is foundation-only until real storage is connected. It records required evidence categories such as before/after installation, serial plate, model/spec plate, installed position, plumbing/electrical connections, old equipment removed, warranty card/manual, proof of purchase/receipt, compliance/safety evidence, and other notes.
+- Pool detail pages show a concise Equipment Register section with linked equipment, calculated warranty status, Add Equipment for this pool, and View all equipment.
+- Job detail and job execution include safe equipment-reference placeholders for future installed/replaced equipment, service notes, and warranty issue flags.
+- `/api/admin/database/equipment/count` provides a protected safe count check using `CLEARWATER_SETUP_KEY`.
+- Future phases: warranty reminder alerts, supplier warranty claim packs, photo/receipt/manual upload, serial number scanning, customer portal warranty display, equipment service history, recurring maintenance reminders, quote/invoice equipment items, and manufacturer warranty lookup if available.
 
 Database-backed Jobs workflow:
 
@@ -391,6 +411,7 @@ Then run protected count checks with the same `x-clearwater-setup-key` header:
 - `/api/admin/database/quotes/count`
 - `/api/admin/database/invoices/count`
 - `/api/admin/database/attachments/count`
+- `/api/admin/database/equipment/count`
 - `/api/admin/database/reports/count`
 - `/api/admin/database/customers/count`
 - `/api/admin/database/properties/count`
@@ -406,6 +427,8 @@ Browser smoke-test these routes:
 - `/properties/new`
 - `/pools`
 - `/pools/new`
+- `/equipment`
+- `/equipment/new`
 - `/jobs`
 - `/jobs/new`
 - `/technician/today`
@@ -428,6 +451,7 @@ Workflow smoke tests:
 - Add customer.
 - Add property/site.
 - Add pool.
+- Add equipment.
 - Add job.
 - Execute job.
 - Add water test.

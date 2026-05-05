@@ -50,6 +50,13 @@
       "when": 1777927500000,
       "tag": "0006_quotes_invoices_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777928400000,
+      "tag": "0007_equipment_register_foundation",
+      "breakpoints": true
     }
   ]
 }

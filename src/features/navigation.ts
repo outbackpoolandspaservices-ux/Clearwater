@@ -49,9 +49,9 @@ export const appNavItems: NavItem[] = [
     group: "Pool Data",
   },
   {
-    title: "Equipment",
+    title: "Equipment Register",
     href: "/equipment",
-    description: "Planned equipment profiles for pumps, filters, chlorinators, heaters, and warranties.",
+    description: "Customer-linked equipment, serial numbers, warranties, and service history.",
     group: "Pool Data",
   },
   {
